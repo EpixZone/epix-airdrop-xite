@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Epix Airdrop</title>
+ <style>
+:root {
+ --bg: #0c0a1a; --fg: #e8e6f0; --card: rgba(255,255,255,0.06); --card-border: rgba(255,255,255,0.08);
+ --accent: #a78bfa; --accent2: #7c3aed; --accent-glow: rgba(167,139,250,0.3);
+ --muted: rgba(255,255,255,0.5); --dim: rgba(255,255,255,0.3);
+ --ok: #34d399; --ok-bg: rgba(52,211,153,0.12); --ok-border: rgba(52,211,153,0.25);
+ --fail: #f87171; --fail-bg: rgba(248,113,113,0.12);
+ --warn: #fbbf24; --warn-bg: rgba(251,191,36,0.12); --warn-border: rgba(251,191,36,0.25);
+ --gold: #fbbf24;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { height: 100%; }
+body {
+ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+ line-height: 1.6; color: var(--fg); min-height: 100%;
+ background: var(--bg);
+ background-image:
+  radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 100%, rgba(99,102,241,0.08) 0%, transparent 50%);
+ overflow-x: hidden;
+}
+.wrap { max-width: 520px; margin: 0 auto; padding: 0 20px 40px; position: relative; z-index: 1; }
+
+/* ===== Falling animation canvas ===== */
+#sky { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+/* ===== Hero ===== */
+.hero { text-align: center; padding: 48px 0 32px; position: relative; }
+.hero-icon {
+ font-size: 4em; line-height: 1; margin-bottom: 8px;
+ animation: heroFloat 3s ease-in-out infinite;
+ display: inline-block; filter: drop-shadow(0 8px 24px rgba(167,139,250,0.4));
+}
+@keyframes heroFloat {
+ 0%, 100% { transform: translateY(0) rotate(-2deg); }
+ 50% { transform: translateY(-12px) rotate(2deg); }
+}
+.hero h1 {
+ font-size: 2.4em; font-weight: 800; letter-spacing: -0.02em;
+ background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 40%, #7c3aed 100%);
+ -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+ background-clip: text;
+}
+.hero .sub {
+ color: var(--muted); font-size: 1em; margin-top: 4px;
+}
+
+/* ===== Glass card ===== */
+.card {
+ background: var(--card); border: 1px solid var(--card-border);
+ border-radius: 16px; padding: 24px; margin-bottom: 16px;
+ backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.card-glow {
+ box-shadow: 0 0 40px rgba(124,58,237,0.08), 0 8px 32px rgba(0,0,0,0.3);
+}
+.card h2 {
+ font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.08em;
+ color: var(--muted); margin-bottom: 16px; font-weight: 600;
+}
+
+/* ===== Claim card ===== */
+#state-disconnected { text-align: center; }
+.connect-prompt { color: var(--muted); font-size: 0.9em; margin-bottom: 16px; }
+
+button {
+ border: none; border-radius: 12px; cursor: pointer; font-weight: 700;
+ font-family: inherit; transition: all 0.2s;
+}
+.btn-claim {
+ width: 100%; padding: 16px; font-size: 1.1em; color: #fff; position: relative; overflow: hidden;
+ background: linear-gradient(135deg, var(--accent2) 0%, #6d28d9 50%, #5b21b6 100%);
+ box-shadow: 0 4px 20px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn-claim:hover {
+ transform: translateY(-1px);
+ box-shadow: 0 6px 28px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-claim:active { transform: translateY(0); }
+.btn-claim:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-claim.loading { opacity: 0.7; cursor: wait; }
+.btn-claim .shimmer {
+ position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+ background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+ animation: shimmer 2.5s infinite;
+}
+@keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
+
+.btn-sm {
+ padding: 6px 14px; font-size: 0.78em; background: rgba(255,255,255,0.06);
+ color: var(--muted); border: 1px solid var(--card-border);
+}
+.btn-sm:hover { background: rgba(255,255,255,0.1); color: var(--fg); }
+
+/* ===== Wallet bar ===== */
+.wallet-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.wallet-pill {
+ display: inline-flex; align-items: center; gap: 6px;
+ background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+ color: var(--ok); font-size: 0.8em; padding: 5px 12px; border-radius: 20px;
+ font-family: "SFMono-Regular", Consolas, monospace;
+}
+.wallet-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+
+/* ===== Estimate ===== */
+.estimate { text-align: center; margin-bottom: 20px; }
+.estimate-val {
+ font-size: 2.8em; font-weight: 800; letter-spacing: -0.02em;
+ background: linear-gradient(135deg, #e0d5ff 0%, var(--accent) 100%);
+ -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+ line-height: 1.1;
+}
+.estimate-label { color: var(--muted); font-size: 0.82em; margin-top: 2px; }
+
+/* ===== xID boost ===== */
+.xid-boost {
+ display: inline-block; font-size: 0.72em; font-weight: 700; padding: 2px 8px;
+ border-radius: 6px; vertical-align: middle; margin-left: 4px;
+ background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.15));
+ color: var(--gold); border: 1px solid rgba(251,191,36,0.3);
+ text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+.xid-callout {
+ background: var(--warn-bg); border: 1px solid var(--warn-border);
+ border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+ font-size: 0.85em; color: var(--fg); text-align: center;
+}
+.xid-callout a {
+ color: var(--accent); text-decoration: none; font-weight: 700;
+ border-bottom: 1px solid rgba(167,139,250,0.3);
+}
+.xid-callout a:hover { border-bottom-color: var(--accent); }
+
+/* ===== Claimed state ===== */
+.claimed-card {
+ background: var(--ok-bg); border: 1px solid var(--ok-border);
+ border-radius: 12px; padding: 20px; text-align: center;
+}
+.claimed-check {
+ font-size: 2.4em; line-height: 1;
+ animation: claimPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes claimPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+.claimed-amt { font-size: 1.4em; font-weight: 800; color: var(--ok); margin-top: 6px; }
+.claimed-detail { font-size: 0.82em; color: var(--muted); margin-top: 4px; }
+
+/* ===== Status ===== */
+.status-msg { padding: 10px 14px; border-radius: 10px; margin-top: 12px; font-size: 0.85em; display: none; }
+.status-msg.ok { display: block; background: var(--ok-bg); color: var(--ok); }
+.status-msg.fail { display: block; background: var(--fail-bg); color: var(--fail); }
+.status-msg.warn { display: block; background: var(--warn-bg); color: var(--warn); }
+.status-msg a { color: inherit; }
+
+/* ===== Pool stats ===== */
+.stats-row {
+ display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+ background: var(--card-border); border-radius: 12px; overflow: hidden;
+}
+.stat {
+ background: rgba(12,10,26,0.6); padding: 14px 8px; text-align: center;
+}
+.stat-val { font-size: 1.3em; font-weight: 800; color: var(--fg); }
+.stat-label { font-size: 0.68em; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* ===== Recent claims ===== */
+.recent-item {
+ display: flex; align-items: center; gap: 10px; padding: 10px 0;
+ border-bottom: 1px solid var(--card-border); font-size: 0.85em;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-avatar {
+ width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+ display: flex; align-items: center; justify-content: center;
+ font-size: 0.75em; font-weight: 700; color: #fff;
+}
+.recent-info { flex: 1; min-width: 0; }
+.recent-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-name.xid { color: var(--accent); }
+.recent-name.addr {
+ color: var(--dim); font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em;
+}
+.recent-meta { font-size: 0.78em; color: var(--dim); }
+.recent-amt { text-align: right; white-space: nowrap; }
+.recent-amt-val { font-weight: 700; }
+.recent-boost {
+ font-size: 0.65em; font-weight: 700; color: var(--gold);
+ text-transform: uppercase; letter-spacing: 0.04em;
+}
+.empty-state { color: var(--dim); font-size: 0.88em; text-align: center; padding: 20px 0; }
+
+/* ===== Info section ===== */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.info-item {
+ background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+ border-radius: 10px; padding: 12px; font-size: 0.82em; color: var(--muted);
+}
+.info-item strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 0.9em; }
+.info-fine { color: var(--dim); font-size: 0.72em; margin-top: 10px; text-align: center; }
+
+.tx-link { color: var(--accent); text-decoration: none; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.82em; }
+.tx-link:hover { text-decoration: underline; }
+
+.hidden { display: none !important; }
+
+footer {
+ text-align: center; margin-top: 32px; padding-bottom: 20px;
+ color: var(--dim); font-size: 0.75em;
+}
+ </style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+
+<div class="wrap">
+
+ <div class="hero">
+  <div class="hero-icon">&#127878;&#127881;&#127882;&#127881;&#127878;</div>
+  <h1>Epix Airdrop</h1>
+  <div class="sub">Connect. Claim. Collect.</div>
+ </div>
+
+ <!-- ===== CLAIM (primary) ===== -->
+ <div class="card card-glow" id="card-claim">
+  <h2>Claim Your EPIX</h2>
+
+  <!-- Disconnected -->
+  <div id="state-disconnected">
+   <div class="connect-prompt">Connect your wallet to see what you can claim</div>
+   <button class="btn-claim" onclick="connectWallet()">
+    <span class="shimmer"></span>
+    Connect Wallet
+   </button>
+   <div class="status-msg" id="wallet-error"></div>
+  </div>
+
+  <!-- Connected -->
+  <div id="state-connected" class="hidden">
+   <div class="wallet-bar">
+    <span class="wallet-pill"><span class="wallet-dot"></span> <span id="wallet-addr"></span></span>
+    <button class="btn-sm" onclick="disconnectWallet()">Disconnect</button>
+   </div>
+
+   <div class="xid-callout hidden" id="xid-callout">
+    You could earn <strong>10x more</strong> with an xID!
+    <br><a href="/epix1xauthduuyn63k6kj54jzgp4l8nnjlhrsyaku8c">Register one first</a>
+   </div>
+
+   <div class="estimate">
+    <div class="estimate-val" id="estimate-amount">-</div>
+    <div class="estimate-label">
+     EPIX available
+     <span class="xid-boost hidden" id="xid-badge">10x Boost</span>
+    </div>
+   </div>
+
+   <button class="btn-claim" onclick="claim()" id="btn-claim">
+    <span class="shimmer"></span>
+    Claim Airdrop
+   </button>
+   <div class="status-msg" id="claim-status"></div>
+  </div>
+
+  <!-- Already claimed -->
+  <div id="state-claimed" class="hidden">
+   <div class="wallet-bar">
+    <span class="wallet-pill"><span class="wallet-dot"></span> <span id="claimed-wallet-addr"></span></span>
+    <button class="btn-sm" onclick="disconnectWallet()">Disconnect</button>
+   </div>
+   <div class="claimed-card">
+    <div class="claimed-check">&#10024;</div>
+    <div class="claimed-amt" id="claimed-amount">-</div>
+    <div class="claimed-detail" id="claimed-detail"></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- ===== POOL STATS ===== -->
+ <div class="card">
+  <h2>Pool</h2>
+  <div class="stats-row">
+   <div class="stat">
+    <div class="stat-val" id="pool-balance">-</div>
+    <div class="stat-label">Balance</div>
+   </div>
+   <div class="stat">
+    <div class="stat-val" id="pool-claimed">-</div>
+    <div class="stat-label">Claimed</div>
+   </div>
+   <div class="stat">
+    <div class="stat-val" id="pool-claimers">-</div>
+    <div class="stat-label">Claimers</div>
+   </div>
+  </div>
+ </div>
+
+ <!-- ===== RECENT CLAIMS ===== -->
+ <div class="card">
+  <h2>Recent Claims</h2>
+  <div id="recent-claims">
+   <div class="empty-state">Loading...</div>
+  </div>
+ </div>
+
+ <!-- ===== HOW IT WORKS ===== -->
+ <div class="card">
+  <h2>How It Works</h2>
+  <div class="info-grid">
+   <div class="info-item"><strong>Fund</strong>Anyone sends EPIX to the pool</div>
+   <div class="info-item"><strong>Claim</strong>One claim per address, ever</div>
+   <div class="info-item"><strong>xID Boost</strong>10x with a registered xID</div>
+   <div class="info-item"><strong>Fair Decay</strong>Pool shrinks but never empties</div>
+  </div>
+  <div class="info-fine">
+   0.1% of pool per claim (1% with xID) &middot; Max 1,000 / 10,000 EPIX &middot; Min 1 EPIX
+  </div>
+ </div>
+
+ <footer>Epix Airdrop &middot; Powered by EpixChain</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/gh/EpixZone/epixframe@v1.0.0/dist/epixframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/EpixZone/epixkit@3b0fb50/epixkit.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script>
+// =============================================
+// Falling parachutes + coins animation
+// =============================================
+(function() {
+ var canvas = document.getElementById("sky")
+ var ctx = canvas.getContext("2d")
+ var W, H
+ var items = []
+ var ITEM_COUNT = 18
+
+ function resize() {
+  W = canvas.width = window.innerWidth
+  H = canvas.height = window.innerHeight
+ }
+ window.addEventListener("resize", resize)
+ resize()
+
+ // Each item: a coin with a parachute
+ function spawn(startY) {
+  var size = 12 + Math.random() * 16
+  return {
+   x: Math.random() * W,
+   y: startY !== undefined ? startY : -50 - Math.random() * H,
+   size: size,
+   speed: 0.3 + Math.random() * 0.6,
+   drift: (Math.random() - 0.5) * 0.4,
+   sway: Math.random() * Math.PI * 2,
+   swayAmp: 0.3 + Math.random() * 0.5,
+   swaySpeed: 0.008 + Math.random() * 0.012,
+   opacity: 0.15 + Math.random() * 0.25,
+   rotation: Math.random() * 0.3 - 0.15,
+   type: Math.random() < 0.65 ? "chute" : "coin"
+  }
+ }
+
+ for (var i = 0; i < ITEM_COUNT; i++) {
+  items.push(spawn(-Math.random() * H * 2))
+ }
+
+ function drawParachute(item) {
+  var x = item.x, y = item.y, s = item.size
+  ctx.save()
+  ctx.globalAlpha = item.opacity
+  ctx.translate(x, y)
+  ctx.rotate(item.rotation)
+
+  // Canopy (half circle dome)
+  ctx.beginPath()
+  ctx.arc(0, 0, s, Math.PI, 0)
+  ctx.fillStyle = "rgba(167,139,250,0.6)"
+  ctx.fill()
+
+  // Canopy stripes
+  ctx.beginPath()
+  ctx.arc(0, 0, s, Math.PI, Math.PI + Math.PI * 0.33)
+  ctx.lineTo(0, 0)
+  ctx.closePath()
+  ctx.fillStyle = "rgba(124,58,237,0.5)"
+  ctx.fill()
+
+  ctx.beginPath()
+  ctx.arc(0, 0, s, Math.PI + Math.PI * 0.66, 0)
+  ctx.lineTo(0, 0)
+  ctx.closePath()
+  ctx.fillStyle = "rgba(124,58,237,0.5)"
+  ctx.fill()
+
+  // Strings
+  ctx.strokeStyle = "rgba(255,255,255,0.2)"
+  ctx.lineWidth = 0.6
+  ctx.beginPath()
+  ctx.moveTo(-s, 0); ctx.lineTo(0, s * 1.6)
+  ctx.moveTo(0, 0); ctx.lineTo(0, s * 1.6)
+  ctx.moveTo(s, 0); ctx.lineTo(0, s * 1.6)
+  ctx.stroke()
+
+  // Coin at bottom
+  var coinR = s * 0.32
+  var coinY = s * 1.6
+
+  // Coin shadow
+  ctx.beginPath()
+  ctx.ellipse(0, coinY + coinR * 0.15, coinR * 1.1, coinR * 0.3, 0, 0, Math.PI * 2)
+  ctx.fillStyle = "rgba(0,0,0,0.15)"
+  ctx.fill()
+
+  // Coin body
+  ctx.beginPath()
+  ctx.arc(0, coinY, coinR, 0, Math.PI * 2)
+  var coinGrad = ctx.createRadialGradient(-coinR * 0.3, coinY - coinR * 0.3, 0, 0, coinY, coinR)
+  coinGrad.addColorStop(0, "#fde68a")
+  coinGrad.addColorStop(0.7, "#f59e0b")
+  coinGrad.addColorStop(1, "#d97706")
+  ctx.fillStyle = coinGrad
+  ctx.fill()
+
+  // Coin shine
+  ctx.beginPath()
+  ctx.arc(-coinR * 0.2, coinY - coinR * 0.2, coinR * 0.3, 0, Math.PI * 2)
+  ctx.fillStyle = "rgba(255,255,255,0.35)"
+  ctx.fill()
+
+  // E on coin
+  ctx.fillStyle = "rgba(120,53,15,0.7)"
+  ctx.font = "bold " + (coinR * 1.1) + "px sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  ctx.fillText("E", 0, coinY + 0.5)
+
+  ctx.restore()
+ }
+
+ function drawCoin(item) {
+  var x = item.x, y = item.y, s = item.size * 0.5
+  ctx.save()
+  ctx.globalAlpha = item.opacity
+  ctx.translate(x, y)
+
+  // Spinning coin (squish horizontally to simulate rotation)
+  var squish = 0.5 + Math.abs(Math.sin(Date.now() * 0.002 + item.sway)) * 0.5
+  ctx.scale(squish, 1)
+
+  // Coin glow
+  ctx.beginPath()
+  ctx.arc(0, 0, s * 1.4, 0, Math.PI * 2)
+  ctx.fillStyle = "rgba(251,191,36,0.08)"
+  ctx.fill()
+
+  // Coin body
+  ctx.beginPath()
+  ctx.arc(0, 0, s, 0, Math.PI * 2)
+  var g = ctx.createRadialGradient(-s * 0.3, -s * 0.3, 0, 0, 0, s)
+  g.addColorStop(0, "#fde68a")
+  g.addColorStop(0.6, "#f59e0b")
+  g.addColorStop(1, "#b45309")
+  ctx.fillStyle = g
+  ctx.fill()
+
+  // Shine
+  ctx.beginPath()
+  ctx.arc(-s * 0.25, -s * 0.25, s * 0.35, 0, Math.PI * 2)
+  ctx.fillStyle = "rgba(255,255,255,0.4)"
+  ctx.fill()
+
+  // E
+  ctx.fillStyle = "rgba(120,53,15,0.6)"
+  ctx.font = "bold " + (s * 1.2) + "px sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  ctx.fillText("E", 0, 1)
+
+  ctx.restore()
+ }
+
+ function frame() {
+  ctx.clearRect(0, 0, W, H)
+  for (var i = 0; i < items.length; i++) {
+   var it = items[i]
+   it.sway += it.swaySpeed
+   it.x += it.drift + Math.sin(it.sway) * it.swayAmp
+   it.y += it.speed
+   it.rotation = Math.sin(it.sway * 0.7) * 0.1
+
+   if (it.type === "chute") drawParachute(it)
+   else drawCoin(it)
+
+   // Reset when off screen
+   if (it.y > H + 60 || it.x < -80 || it.x > W + 80) {
+    items[i] = spawn(-50 - Math.random() * 100)
+   }
+  }
+  requestAnimationFrame(frame)
+ }
+ requestAnimationFrame(frame)
+})();
+
+// =============================================
+// Contract interaction
+// =============================================
+
+var AIRDROP_ADDRESS = "0xCa9aDc8736d5fb1743939cA745824fB8fBd97793"
+var AIRDROP_ABI = [
+ "function claim() external",
+ "function getPoolInfo() external view returns (tuple(uint256 balance, uint256 totalClaimed, uint32 totalClaimers, uint256 claimRateBps, uint256 maxClaim, uint256 maxClaimXid, uint256 minClaim, uint256 xidMultiplier))",
+ "function estimateClaim(address claimer) external view returns (uint256 amount, bool xidBoosted)",
+ "function getClaimerInfo(address claimer) external view returns (tuple(uint256 amountClaimed, uint64 claimTime, bool claimed, bool hasXid, string xidName))",
+ "function getRecentClaims() external view returns (tuple(address claimer, uint256 amount, uint64 timestamp, bool xidBoosted, string xidName)[])",
+ "event Claimed(address indexed claimer, uint256 amount, bool xidBoosted)",
+ "event Funded(address indexed funder, uint256 amount)"
+]
+
+var AVATAR_COLORS = ["#7c3aed","#6366f1","#8b5cf6","#a855f7","#6d28d9","#4f46e5","#7e22ce","#5b21b6"]
+
+var page = epixFrame
+var readProvider = null
+var readContract = null
+var explorerUrl = ""
+var wallet = { provider: null, signer: null, contract: null, address: null, name: null }
+var epixkitReady = false
+
+// --- Init ---
+
+page.chainEvmRpcUrl().then(function(evmRpc) {
+ page.chainBlockExplorerUrl().then(function(explorer) {
+  var rpcUrl = evmRpc || "https://evmrpc.testnet.epix.zone"
+  explorerUrl = (explorer || "https://testscan.epix.zone").replace(/\/+$/, "")
+
+  readProvider = new ethers.JsonRpcProvider(rpcUrl)
+  readContract = new ethers.Contract(AIRDROP_ADDRESS, AIRDROP_ABI, readProvider)
+
+  if (typeof EpixKit !== "undefined") {
+   EpixKit.init({
+    chainId: "0x77D",
+    chainName: "Epix Testnet",
+    nativeCurrency: { name: "EPIX", symbol: "EPIX", decimals: 18 },
+    rpcUrls: [rpcUrl],
+    blockExplorerUrls: [explorerUrl],
+    onReconnect: setupWallet
+   })
+   epixkitReady = true
+  }
+
+  loadPoolInfo()
+  loadRecentClaims()
+ })
+})
+
+// --- Pool Info ---
+
+function loadPoolInfo() {
+ if (!readContract) return
+ readContract.getPoolInfo().then(function(info) {
+  animateValue("pool-balance", formatEpix(ethers.formatEther(info.balance)))
+  animateValue("pool-claimed", formatEpix(ethers.formatEther(info.totalClaimed)))
+  animateValue("pool-claimers", String(Number(info.totalClaimers)))
+ }).catch(function(err) {
+  console.log("[Airdrop] Pool info error:", err.message)
+ })
+}
+
+function animateValue(id, val) {
+ var el = document.getElementById(id)
+ el.style.transition = "opacity 0.3s"
+ el.style.opacity = "0"
+ setTimeout(function() { el.textContent = val; el.style.opacity = "1" }, 150)
+}
+
+// --- Recent Claims ---
+
+function loadRecentClaims() {
+ if (!readContract) return
+ readContract.getRecentClaims().then(function(claims) {
+  var container = document.getElementById("recent-claims")
+  container.innerHTML = ""
+
+  if (claims.length === 0) {
+   container.innerHTML = '<div class="empty-state">No claims yet - be the first!</div>'
+   return
+  }
+
+  for (var i = 0; i < claims.length; i++) {
+   var c = claims[i]
+   var row = document.createElement("div")
+   row.className = "recent-item"
+
+   var hasName = c.xidName && c.xidName.length > 0
+   var displayName = hasName ? escHtml(c.xidName) : shortAddr(c.claimer)
+   var nameClass = hasName ? "xid" : "addr"
+
+   // Avatar from address hash
+   var colorIdx = parseInt(c.claimer.substring(2, 4), 16) % AVATAR_COLORS.length
+   var initial = hasName ? c.xidName.charAt(0).toUpperCase() : c.claimer.substring(2, 4).toUpperCase()
+
+   var boostTag = c.xidBoosted ? '<div class="recent-boost">xID Boosted</div>' : ''
+
+   row.innerHTML =
+    '<div class="recent-avatar" style="background:' + AVATAR_COLORS[colorIdx] + '">' + initial + '</div>' +
+    '<div class="recent-info">' +
+     '<div class="recent-name ' + nameClass + '">' + displayName + '</div>' +
+     '<div class="recent-meta">' + timeAgo(Number(c.timestamp)) + '</div>' +
+    '</div>' +
+    '<div class="recent-amt">' +
+     '<div class="recent-amt-val">' + formatEpix(ethers.formatEther(c.amount)) + ' EPIX</div>' +
+     boostTag +
+    '</div>'
+   container.appendChild(row)
+  }
+ }).catch(function(err) {
+  console.log("[Airdrop] Recent claims error:", err.message)
+  document.getElementById("recent-claims").innerHTML = '<div class="empty-state">Could not load recent claims</div>'
+ })
+}
+
+// --- Wallet ---
+
+async function connectWallet() {
+ if (!epixkitReady) {
+  showStatus("wallet-error", "fail", "Wallet connector not loaded yet, please try again")
+  return
+ }
+ hideStatus("wallet-error")
+ try {
+  await setupWallet(await EpixKit.connect())
+ } catch (err) {
+  if (err.message !== "User cancelled" && err.message !== "No wallet detected") {
+   showStatus("wallet-error", "fail", err.message || "Connection failed")
+  }
+ }
+}
+
+function disconnectWallet() {
+ if (typeof EpixKit !== "undefined") EpixKit.disconnect()
+ wallet.provider = null
+ wallet.signer = null
+ wallet.contract = null
+ wallet.address = null
+ wallet.name = null
+ showSection("state-disconnected")
+}
+
+async function setupWallet(result) {
+ wallet.provider = new ethers.BrowserProvider(result.provider)
+ wallet.signer = await wallet.provider.getSigner()
+ wallet.address = result.address
+ wallet.name = result.walletName || ""
+ wallet.contract = new ethers.Contract(AIRDROP_ADDRESS, AIRDROP_ABI, wallet.signer)
+
+ var label = shortAddr(wallet.address)
+ if (wallet.name) label = wallet.name + " " + label
+
+ try {
+  var info = await readContract.getClaimerInfo(wallet.address)
+
+  if (info.claimed) {
+   document.getElementById("claimed-wallet-addr").textContent = label
+   var amtStr = formatEpix(ethers.formatEther(info.amountClaimed))
+   document.getElementById("claimed-amount").textContent = amtStr + " EPIX Claimed"
+   var detail = ""
+   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - xID boosted"
+   if (info.claimTime > 0) detail += (detail ? " - " : "") + timeAgo(Number(info.claimTime))
+   document.getElementById("claimed-detail").textContent = detail
+   showSection("state-claimed")
+  } else {
+   document.getElementById("wallet-addr").textContent = label
+   var est = await readContract.estimateClaim(wallet.address)
+   var amount = ethers.formatEther(est.amount)
+   document.getElementById("estimate-amount").textContent = formatEpix(amount)
+
+   if (est.xidBoosted) {
+    document.getElementById("xid-badge").classList.remove("hidden")
+    document.getElementById("xid-callout").classList.add("hidden")
+   } else {
+    document.getElementById("xid-badge").classList.add("hidden")
+    document.getElementById("xid-callout").classList.remove("hidden")
+   }
+
+   hideStatus("claim-status")
+   document.getElementById("btn-claim").disabled = false
+   document.getElementById("btn-claim").innerHTML = '<span class="shimmer"></span>Claim Airdrop'
+   document.getElementById("btn-claim").classList.remove("loading")
+   showSection("state-connected")
+  }
+ } catch (err) {
+  document.getElementById("wallet-addr").textContent = label
+  document.getElementById("estimate-amount").textContent = "?"
+  document.getElementById("xid-callout").classList.add("hidden")
+  document.getElementById("xid-badge").classList.add("hidden")
+  showStatus("claim-status", "fail", "Could not load claim info: " + err.message)
+  showSection("state-connected")
+ }
+}
+
+// --- Claim ---
+
+async function claim() {
+ if (!wallet.signer) return
+
+ var btn = document.getElementById("btn-claim")
+ btn.disabled = true
+ btn.classList.add("loading")
+ btn.innerHTML = '<span class="shimmer"></span>Sending...'
+ hideStatus("claim-status")
+
+ try {
+  var tx = await wallet.contract.claim()
+  btn.innerHTML = '<span class="shimmer"></span>Confirming...'
+
+  var txLink = '<a class="tx-link" href="' + explorerUrl + '/tx/' + tx.hash + '" target="_blank">' + tx.hash.substring(0, 18) + '...</a>'
+  showStatus("claim-status", "warn", "Transaction sent: " + txLink)
+
+  await tx.wait()
+
+  btn.innerHTML = "Claimed!"
+  showStatus("claim-status", "ok", "Airdrop claimed successfully!")
+
+  loadPoolInfo()
+  loadRecentClaims()
+
+  setTimeout(function() { showClaimedState() }, 1500)
+ } catch (err) {
+  btn.disabled = false
+  btn.classList.remove("loading")
+  btn.innerHTML = '<span class="shimmer"></span>Claim Airdrop'
+  showStatus("claim-status", "fail", err.reason || err.message || "Transaction failed")
+ }
+}
+
+async function showClaimedState() {
+ if (!wallet.address) return
+ try {
+  var info = await readContract.getClaimerInfo(wallet.address)
+  if (info.claimed) {
+   var label = shortAddr(wallet.address)
+   if (wallet.name) label = wallet.name + " " + label
+   document.getElementById("claimed-wallet-addr").textContent = label
+   var amtStr = formatEpix(ethers.formatEther(info.amountClaimed))
+   document.getElementById("claimed-amount").textContent = amtStr + " EPIX Claimed"
+   var detail = ""
+   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - xID boosted"
+   if (info.claimTime > 0) detail += (detail ? " - " : "") + timeAgo(Number(info.claimTime))
+   document.getElementById("claimed-detail").textContent = detail
+   showSection("state-claimed")
+  }
+ } catch (err) {
+  console.log("[Airdrop] Post-claim refresh error:", err.message)
+ }
+}
+
+// --- UI Helpers ---
+
+function showSection(id) {
+ ["state-disconnected", "state-connected", "state-claimed"].forEach(function(s) {
+  document.getElementById(s).classList.toggle("hidden", s !== id)
+ })
+}
+
+function showStatus(elId, type, html) {
+ var el = document.getElementById(elId)
+ el.className = "status-msg " + type
+ el.innerHTML = html
+}
+
+function hideStatus(elId) {
+ var el = document.getElementById(elId)
+ el.className = "status-msg"
+ el.innerHTML = ""
+}
+
+function shortAddr(addr) {
+ if (!addr || addr.length < 10) return addr || ""
+ return addr.substring(0, 6) + "\u2026" + addr.substring(addr.length - 4)
+}
+
+function formatEpix(val) {
+ var n = parseFloat(val)
+ if (isNaN(n)) return "0"
+ if (n >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
+ if (n >= 1) return n.toFixed(2)
+ if (n >= 0.01) return n.toFixed(3)
+ return n.toFixed(4)
+}
+
+function timeAgo(ts) {
+ if (!ts) return ""
+ var now = Math.floor(Date.now() / 1000)
+ var diff = now - ts
+ if (diff < 60) return "just now"
+ if (diff < 3600) return Math.floor(diff / 60) + "m ago"
+ if (diff < 86400) return Math.floor(diff / 3600) + "h ago"
+ if (diff < 604800) return Math.floor(diff / 86400) + "d ago"
+ return new Date(ts * 1000).toLocaleDateString()
+}
+
+function escHtml(s) {
+ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+</script>
+
+</body>
+</html>

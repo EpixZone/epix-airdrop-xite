@@ -1,0 +1,22 @@
+{
+ "address": "epix1drp5v2gs20fass9t7h8yfmtfwc8hvmjvszswtt",
+ "address_index": 14997294,
+ "clone_root": "template-new",
+ "cloned_from": "epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t",
+ "description": "Claim your share of the EPIX airdrop pool",
+ "epixnet_version": "0.0.2",
+ "files": {
+  "index.html": {
+   "sha512": "3a943fbde0d18ee7f9a9e38ecb114af6836de5c2ddd87f24cbed39e126f743c5",
+   "size": 27831
+  }
+ },
+ "ignore": "(js/all\\.js|\\.git)",
+ "inner_path": "content.json",
+ "modified": 1773889739,
+ "postmessage_nonce_security": true,
+ "signers_sign": "HLA1bzbiQeLUQ20CNT4U1QIdKsFOQlBKEkZ8JQpCsOKpRiNmZlg/5of5UFpVOFCRvjk+UGz1PRPbcxvE9JVgwYI=",
+ "signs": {"epix1drp5v2gs20fass9t7h8yfmtfwc8hvmjvszswtt": "G7rJ6tUf0AafU5Rlmn8dCj+RHzOIgxKMHO9JCfYGo0m6TTRGD04vYbubm0SCTIMLHGdkGqIPXwm3oFFg2izZsJg="},
+ "signs_required": 1,
+ "title": "Epix Airdrop"
+}
