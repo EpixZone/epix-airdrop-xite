@@ -204,6 +204,28 @@ button {
 .info-item strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 0.9em; }
 .info-fine { color: var(--dim); font-size: 0.72em; margin-top: 10px; text-align: center; }
 
+/* ===== Fund section ===== */
+.fund-row { display: flex; gap: 8px; }
+.fund-input {
+ flex: 1; padding: 12px 14px; font-size: 1em; font-family: inherit; font-weight: 600;
+ background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
+ border-radius: 12px; color: var(--fg); outline: none; min-width: 0;
+}
+.fund-input::placeholder { color: var(--dim); font-weight: 400; }
+.fund-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(167,139,250,0.15); }
+.btn-fund {
+ padding: 12px 20px; font-size: 0.95em; color: #fff; white-space: nowrap;
+ background: linear-gradient(135deg, #059669 0%, #047857 100%);
+ box-shadow: 0 4px 16px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn-fund:hover {
+ transform: translateY(-1px);
+ box-shadow: 0 6px 20px rgba(5,150,105,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-fund:active { transform: translateY(0); }
+.btn-fund:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.fund-note { color: var(--dim); font-size: 0.75em; margin-top: 8px; text-align: center; }
+
 .tx-link { color: var(--accent); text-decoration: none; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.82em; }
 .tx-link:hover { text-decoration: underline; }
 
@@ -213,30 +235,45 @@ footer {
  text-align: center; margin-top: 32px; padding-bottom: 20px;
  color: var(--dim); font-size: 0.75em;
 }
+
+/* ===== Language picker ===== */
+.lang-picker {
+ position: fixed; top: 10px; left: 10px; z-index: 10;
+}
+.lang-picker select {
+ background: rgba(255,255,255,0.08); border: 1px solid var(--card-border);
+ border-radius: 8px; padding: 4px 8px; color: var(--muted); font-size: 0.75em;
+ font-family: inherit; cursor: pointer; outline: none;
+}
+.lang-picker select:hover { background: rgba(255,255,255,0.12); color: var(--fg); }
+.lang-picker select option { background: #1a1830; color: var(--fg); }
  </style>
 </head>
 <body>
 
 <canvas id="sky"></canvas>
 
+<div class="lang-picker">
+ <select id="lang-select" onchange="setLang(this.value)"></select>
+</div>
+
 <div class="wrap">
 
  <div class="hero">
-  <div class="hero-icon">&#127878;&#127881;&#127882;&#127881;&#127878;</div>
-  <h1>Epix Airdrop</h1>
-  <div class="sub">Connect. Claim. Collect.</div>
+  <h1 data-t="title">Epix Airdrop</h1>
+  <div class="sub" data-t="subtitle">Connect. Claim. Collect.</div>
  </div>
 
  <!-- ===== CLAIM (primary) ===== -->
  <div class="card card-glow" id="card-claim">
-  <h2>Claim Your EPIX</h2>
+  <h2 data-t="claimYourEpix">Claim Your EPIX</h2>
 
   <!-- Disconnected -->
   <div id="state-disconnected">
-   <div class="connect-prompt">Connect your wallet to see what you can claim</div>
-   <button class="btn-claim" onclick="connectWallet()">
+   <div class="connect-prompt" data-t="connectPrompt">Connect your wallet to see what you can claim</div>
+   <button class="btn-claim" onclick="connectWallet()" id="btn-connect">
     <span class="shimmer"></span>
-    Connect Wallet
+    <span data-t="connectWallet">Connect Wallet</span>
    </button>
    <div class="status-msg" id="wallet-error"></div>
   </div>
@@ -245,25 +282,25 @@ footer {
   <div id="state-connected" class="hidden">
    <div class="wallet-bar">
     <span class="wallet-pill"><span class="wallet-dot"></span> <span id="wallet-addr"></span></span>
-    <button class="btn-sm" onclick="disconnectWallet()">Disconnect</button>
+    <button class="btn-sm" onclick="disconnectWallet()" data-t="disconnect">Disconnect</button>
    </div>
 
    <div class="xid-callout hidden" id="xid-callout">
-    You could earn <strong>10x more</strong> with an xID!
-    <br><a href="/epix1xauthduuyn63k6kj54jzgp4l8nnjlhrsyaku8c">Register one first</a>
+    <span data-t="xidCallout">You could earn <strong>10x more</strong> with an xID!</span>
+    <br><a href="/epix1xauthduuyn63k6kj54jzgp4l8nnjlhrsyaku8c" data-t="registerFirst">Register one first</a>
    </div>
 
    <div class="estimate">
     <div class="estimate-val" id="estimate-amount">-</div>
     <div class="estimate-label">
-     EPIX available
-     <span class="xid-boost hidden" id="xid-badge">10x Boost</span>
+     <span data-t="epixAvailable">EPIX available</span>
+     <span class="xid-boost hidden" id="xid-badge" data-t="xidBoostBadge">10x Boost</span>
     </div>
    </div>
 
    <button class="btn-claim" onclick="claim()" id="btn-claim">
     <span class="shimmer"></span>
-    Claim Airdrop
+    <span data-t="claimAirdrop">Claim Airdrop</span>
    </button>
    <div class="status-msg" id="claim-status"></div>
   </div>
@@ -272,7 +309,7 @@ footer {
   <div id="state-claimed" class="hidden">
    <div class="wallet-bar">
     <span class="wallet-pill"><span class="wallet-dot"></span> <span id="claimed-wallet-addr"></span></span>
-    <button class="btn-sm" onclick="disconnectWallet()">Disconnect</button>
+    <button class="btn-sm" onclick="disconnectWallet()" data-t="disconnect">Disconnect</button>
    </div>
    <div class="claimed-card">
     <div class="claimed-check">&#10024;</div>
@@ -284,46 +321,61 @@ footer {
 
  <!-- ===== POOL STATS ===== -->
  <div class="card">
-  <h2>Pool</h2>
+  <h2 data-t="pool">Pool</h2>
   <div class="stats-row">
    <div class="stat">
     <div class="stat-val" id="pool-balance">-</div>
-    <div class="stat-label">Balance</div>
+    <div class="stat-label" data-t="balance">Balance</div>
    </div>
    <div class="stat">
     <div class="stat-val" id="pool-claimed">-</div>
-    <div class="stat-label">Claimed</div>
+    <div class="stat-label" data-t="claimed">Claimed</div>
    </div>
    <div class="stat">
     <div class="stat-val" id="pool-claimers">-</div>
-    <div class="stat-label">Claimers</div>
+    <div class="stat-label" data-t="claimers">Claimers</div>
    </div>
   </div>
  </div>
 
  <!-- ===== RECENT CLAIMS ===== -->
  <div class="card">
-  <h2>Recent Claims</h2>
+  <h2 data-t="recentClaims">Recent Claims</h2>
   <div id="recent-claims">
-   <div class="empty-state">Loading...</div>
+   <div class="empty-state" data-t="loading">Loading...</div>
   </div>
  </div>
 
  <!-- ===== HOW IT WORKS ===== -->
  <div class="card">
-  <h2>How It Works</h2>
+  <h2 data-t="howItWorks">How It Works</h2>
   <div class="info-grid">
-   <div class="info-item"><strong>Fund</strong>Anyone sends EPIX to the pool</div>
-   <div class="info-item"><strong>Claim</strong>One claim per address, ever</div>
-   <div class="info-item"><strong>xID Boost</strong>10x with a registered xID</div>
-   <div class="info-item"><strong>Fair Decay</strong>Pool shrinks but never empties</div>
+   <div class="info-item"><strong data-t="infoFund">Fund</strong><span data-t="infoFundDesc">Anyone sends EPIX to the pool</span></div>
+   <div class="info-item"><strong data-t="infoClaim">Claim</strong><span data-t="infoClaimDesc">One claim per address, ever</span></div>
+   <div class="info-item"><strong data-t="infoXidBoost">xID Boost</strong><span data-t="infoXidDesc">10x with a registered xID</span></div>
+   <div class="info-item"><strong data-t="infoDecay">Fair Decay</strong><span data-t="infoDecayDesc">Pool shrinks but never empties</span></div>
   </div>
-  <div class="info-fine">
+  <div class="info-fine" data-t="infoFine">
    0.1% of pool per claim (1% with xID) &middot; Max 1,000 / 10,000 EPIX &middot; Min 1 EPIX
   </div>
  </div>
 
- <footer>Epix Airdrop &middot; Powered by EpixChain</footer>
+ <!-- ===== FUND THE POOL ===== -->
+ <div class="card">
+  <h2 data-t="fundThePool">Fund the Pool</h2>
+  <div id="fund-disconnected" style="text-align:center; color:var(--muted); font-size:0.9em;" data-t="fundConnectPrompt">
+   Connect your wallet above to fund the pool
+  </div>
+  <div id="fund-connected" class="hidden">
+   <div class="fund-row">
+    <input type="number" class="fund-input" id="fund-amount" data-t-placeholder="amountPlaceholder" placeholder="Amount in EPIX" min="0" step="any">
+    <button class="btn-fund" onclick="fundPool()" id="btn-fund" data-t="fundBtn">Fund</button>
+   </div>
+   <div class="fund-note" data-t="fundNote">Send EPIX to grow the airdrop pool for everyone</div>
+   <div class="status-msg" id="fund-status"></div>
+  </div>
+ </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/gh/EpixZone/epixframe@v1.0.0/dist/epixframe.min.js"></script>
@@ -507,10 +559,580 @@ footer {
 })();
 
 // =============================================
+// i18n
+// =============================================
+
+var LANGS = {
+ en: { _name: "English",
+  title: "Epix Airdrop", subtitle: "Connect. Claim. Collect.", claimYourEpix: "Claim Your EPIX",
+  connectPrompt: "Connect your wallet to see what you can claim", connectWallet: "Connect Wallet",
+  disconnect: "Disconnect", xidCallout: 'You could earn <strong>10x more</strong> with an xID!',
+  registerFirst: "Register one first", epixAvailable: "EPIX available", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Claim Airdrop", pool: "Pool", balance: "Balance", claimed: "Claimed", claimers: "Claimers",
+  recentClaims: "Recent Claims", loading: "Loading...", howItWorks: "How It Works",
+  infoFund: "Fund", infoFundDesc: "Anyone sends EPIX to the pool",
+  infoClaim: "Claim", infoClaimDesc: "One claim per address, ever",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x with a registered xID",
+  infoDecay: "Fair Decay", infoDecayDesc: "Pool shrinks but never empties",
+  infoFine: "0.1% of pool per claim (1% with xID) \u00b7 Max 1,000 / 10,000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Fund the Pool", fundConnectPrompt: "Connect your wallet above to fund the pool",
+  amountPlaceholder: "Amount in EPIX", fundBtn: "Fund",
+  fundNote: "Send EPIX to grow the airdrop pool for everyone",
+  sending: "Sending...", confirming: "Confirming...", claimedBang: "Claimed!",
+  claimSuccess: "Airdrop claimed successfully!", txSent: "Transaction sent: ",
+  enterValid: "Enter a valid amount", txFailed: "Transaction failed",
+  walletNotLoaded: "Wallet connector not loaded yet, please try again",
+  couldNotLoad: "Could not load claim info: ", noClaimsYet: "No claims yet - be the first!",
+  couldNotLoadRecent: "Could not load recent claims", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX Claimed", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool funded with ", justNow: "just now", mAgo: "m ago", hAgo: "h ago", dAgo: "d ago"
+ },
+ ar: { _name: "العربية",
+  title: "إيبكس إيردروب", subtitle: "اتصل. اطلب. اجمع.", claimYourEpix: "اطلب EPIX الخاص بك",
+  connectPrompt: "وصّل محفظتك لترى ما يمكنك المطالبة به", connectWallet: "وصّل المحفظة",
+  disconnect: "قطع الاتصال", xidCallout: 'يمكنك كسب <strong>10 أضعاف</strong> مع xID!',
+  registerFirst: "سجّل واحدًا أولاً", epixAvailable: "EPIX متاح", xidBoostBadge: "10x تعزيز",
+  claimAirdrop: "اطلب الإيردروب", pool: "المجمع", balance: "الرصيد", claimed: "مطالَب به", claimers: "المطالبون",
+  recentClaims: "المطالبات الأخيرة", loading: "جارٍ التحميل...", howItWorks: "كيف يعمل",
+  infoFund: "تمويل", infoFundDesc: "أي شخص يرسل EPIX للمجمع",
+  infoClaim: "مطالبة", infoClaimDesc: "مطالبة واحدة لكل عنوان",
+  infoXidBoost: "تعزيز xID", infoXidDesc: "10 أضعاف مع xID مسجل",
+  infoDecay: "تناقص عادل", infoDecayDesc: "المجمع يتقلص لكن لا ينفد",
+  infoFine: "0.1% من المجمع لكل مطالبة (1% مع xID) \u00b7 حد أقصى 1,000 / 10,000 EPIX \u00b7 حد أدنى 1 EPIX",
+  fundThePool: "موّل المجمع", fundConnectPrompt: "وصّل محفظتك أعلاه لتمويل المجمع",
+  amountPlaceholder: "المبلغ بـ EPIX", fundBtn: "موّل",
+  fundNote: "أرسل EPIX لتنمية مجمع الإيردروب للجميع",
+  sending: "جارٍ الإرسال...", confirming: "جارٍ التأكيد...", claimedBang: "تم المطالبة!",
+  claimSuccess: "تم المطالبة بالإيردروب بنجاح!", txSent: "تم إرسال المعاملة: ",
+  enterValid: "أدخل مبلغًا صحيحًا", txFailed: "فشلت المعاملة",
+  walletNotLoaded: "لم يتم تحميل موصّل المحفظة بعد، حاول مرة أخرى",
+  couldNotLoad: "تعذر تحميل معلومات المطالبة: ", noClaimsYet: "لا مطالبات بعد - كن الأول!",
+  couldNotLoadRecent: "تعذر تحميل المطالبات الأخيرة", xidBoosted: "معزز بـ xID",
+  epixClaimed: "EPIX مطالَب به", xidBoostedDash: "معزز بـ xID",
+  poolFunded: "تم تمويل المجمع بـ ", justNow: "الآن", mAgo: "د مضت", hAgo: "س مضت", dAgo: "ي مضت"
+ },
+ da: { _name: "Dansk",
+  title: "Epix Airdrop", subtitle: "Forbind. Kræv. Saml.", claimYourEpix: "Kræv din EPIX",
+  connectPrompt: "Forbind din tegnebog for at se hvad du kan kræve", connectWallet: "Forbind tegnebog",
+  disconnect: "Afbryd", xidCallout: 'Du kunne tjene <strong>10x mere</strong> med et xID!',
+  registerFirst: "Registrer en først", epixAvailable: "EPIX tilgængelig", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Kræv Airdrop", pool: "Pulje", balance: "Saldo", claimed: "Krævet", claimers: "Kravstillere",
+  recentClaims: "Seneste krav", loading: "Indlæser...", howItWorks: "Sådan virker det",
+  infoFund: "Finansier", infoFundDesc: "Alle kan sende EPIX til puljen",
+  infoClaim: "Kræv", infoClaimDesc: "Et krav per adresse, altid",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x med et registreret xID",
+  infoDecay: "Fair Decay", infoDecayDesc: "Puljen skrumper men tømmes aldrig",
+  infoFine: "0.1% af puljen per krav (1% med xID) \u00b7 Maks 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Finansier puljen", fundConnectPrompt: "Forbind din tegnebog ovenfor for at finansiere puljen",
+  amountPlaceholder: "Beløb i EPIX", fundBtn: "Finansier",
+  fundNote: "Send EPIX for at udvide airdrop-puljen for alle",
+  sending: "Sender...", confirming: "Bekræfter...", claimedBang: "Krævet!",
+  claimSuccess: "Airdrop krævet med succes!", txSent: "Transaktion sendt: ",
+  enterValid: "Indtast et gyldigt beløb", txFailed: "Transaktion mislykkedes",
+  walletNotLoaded: "Tegnebogsforbindelse ikke indlæst endnu, prøv igen",
+  couldNotLoad: "Kunne ikke indlæse kravinfo: ", noClaimsYet: "Ingen krav endnu - vær den første!",
+  couldNotLoadRecent: "Kunne ikke indlæse seneste krav", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX krævet", xidBoostedDash: "xID boosted",
+  poolFunded: "Pulje finansieret med ", justNow: "lige nu", mAgo: "m siden", hAgo: "t siden", dAgo: "d siden"
+ },
+ de: { _name: "Deutsch",
+  title: "Epix Airdrop", subtitle: "Verbinden. Beanspruchen. Sammeln.", claimYourEpix: "Fordere dein EPIX",
+  connectPrompt: "Verbinde dein Wallet um zu sehen was du beanspruchen kannst", connectWallet: "Wallet verbinden",
+  disconnect: "Trennen", xidCallout: 'Du könntest <strong>10x mehr</strong> mit einer xID verdienen!',
+  registerFirst: "Registriere zuerst eine", epixAvailable: "EPIX verfügbar", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Airdrop beanspruchen", pool: "Pool", balance: "Guthaben", claimed: "Beansprucht", claimers: "Antragsteller",
+  recentClaims: "Letzte Ansprüche", loading: "Laden...", howItWorks: "So funktioniert es",
+  infoFund: "Einzahlen", infoFundDesc: "Jeder kann EPIX in den Pool senden",
+  infoClaim: "Beanspruchen", infoClaimDesc: "Ein Anspruch pro Adresse",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x mit registrierter xID",
+  infoDecay: "Fairer Verfall", infoDecayDesc: "Pool schrumpft, wird aber nie leer",
+  infoFine: "0,1% des Pools pro Anspruch (1% mit xID) \u00b7 Max 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Pool finanzieren", fundConnectPrompt: "Verbinde dein Wallet oben um den Pool zu finanzieren",
+  amountPlaceholder: "Betrag in EPIX", fundBtn: "Einzahlen",
+  fundNote: "Sende EPIX um den Airdrop-Pool für alle zu vergrößern",
+  sending: "Senden...", confirming: "Bestätigen...", claimedBang: "Beansprucht!",
+  claimSuccess: "Airdrop erfolgreich beansprucht!", txSent: "Transaktion gesendet: ",
+  enterValid: "Gib einen gültigen Betrag ein", txFailed: "Transaktion fehlgeschlagen",
+  walletNotLoaded: "Wallet-Verbindung noch nicht geladen, bitte erneut versuchen",
+  couldNotLoad: "Anspruchsinfo konnte nicht geladen werden: ", noClaimsYet: "Noch keine Ansprüche - sei der Erste!",
+  couldNotLoadRecent: "Letzte Ansprüche konnten nicht geladen werden", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX beansprucht", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool finanziert mit ", justNow: "gerade eben", mAgo: "m her", hAgo: "h her", dAgo: "T her"
+ },
+ es: { _name: "Español",
+  title: "Epix Airdrop", subtitle: "Conecta. Reclama. Colecciona.", claimYourEpix: "Reclama tu EPIX",
+  connectPrompt: "Conecta tu billetera para ver lo que puedes reclamar", connectWallet: "Conectar billetera",
+  disconnect: "Desconectar", xidCallout: '¡Podrías ganar <strong>10x más</strong> con un xID!',
+  registerFirst: "Registra uno primero", epixAvailable: "EPIX disponible", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Reclamar Airdrop", pool: "Pool", balance: "Saldo", claimed: "Reclamado", claimers: "Reclamantes",
+  recentClaims: "Reclamos recientes", loading: "Cargando...", howItWorks: "Cómo funciona",
+  infoFund: "Financiar", infoFundDesc: "Cualquiera envía EPIX al pool",
+  infoClaim: "Reclamar", infoClaimDesc: "Un reclamo por dirección",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x con un xID registrado",
+  infoDecay: "Decaimiento justo", infoDecayDesc: "El pool se reduce pero nunca se vacía",
+  infoFine: "0,1% del pool por reclamo (1% con xID) \u00b7 Máx 1.000 / 10.000 EPIX \u00b7 Mín 1 EPIX",
+  fundThePool: "Financiar el pool", fundConnectPrompt: "Conecta tu billetera arriba para financiar el pool",
+  amountPlaceholder: "Cantidad en EPIX", fundBtn: "Financiar",
+  fundNote: "Envía EPIX para hacer crecer el pool de airdrop para todos",
+  sending: "Enviando...", confirming: "Confirmando...", claimedBang: "¡Reclamado!",
+  claimSuccess: "¡Airdrop reclamado con éxito!", txSent: "Transacción enviada: ",
+  enterValid: "Ingresa una cantidad válida", txFailed: "Transacción fallida",
+  walletNotLoaded: "Conector de billetera no cargado, intenta de nuevo",
+  couldNotLoad: "No se pudo cargar info de reclamo: ", noClaimsYet: "Sin reclamos aún - ¡sé el primero!",
+  couldNotLoadRecent: "No se pudieron cargar reclamos recientes", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX reclamado", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool financiado con ", justNow: "ahora", mAgo: "m atrás", hAgo: "h atrás", dAgo: "d atrás"
+ },
+ fa: { _name: "فارسی",
+  title: "ایردراپ اپیکس", subtitle: "اتصال. درخواست. جمع‌آوری.", claimYourEpix: "EPIX خود را درخواست کنید",
+  connectPrompt: "کیف پول خود را وصل کنید", connectWallet: "اتصال کیف پول",
+  disconnect: "قطع اتصال", xidCallout: 'می‌توانید <strong>10 برابر بیشتر</strong> با xID کسب کنید!',
+  registerFirst: "ابتدا یکی ثبت کنید", epixAvailable: "EPIX موجود", xidBoostBadge: "10x تقویت",
+  claimAirdrop: "درخواست ایردراپ", pool: "استخر", balance: "موجودی", claimed: "درخواست شده", claimers: "درخواست‌کنندگان",
+  recentClaims: "درخواست‌های اخیر", loading: "بارگذاری...", howItWorks: "چگونه کار می‌کند",
+  infoFund: "تأمین مالی", infoFundDesc: "هر کسی EPIX به استخر ارسال می‌کند",
+  infoClaim: "درخواست", infoClaimDesc: "یک درخواست برای هر آدرس",
+  infoXidBoost: "تقویت xID", infoXidDesc: "10 برابر با xID ثبت شده",
+  infoDecay: "کاهش منصفانه", infoDecayDesc: "استخر کوچک می‌شود اما خالی نمی‌شود",
+  infoFine: "0.1% از استخر (1% با xID) \u00b7 حداکثر 1,000 / 10,000 EPIX \u00b7 حداقل 1 EPIX",
+  fundThePool: "تأمین مالی استخر", fundConnectPrompt: "کیف پول خود را بالا وصل کنید",
+  amountPlaceholder: "مقدار به EPIX", fundBtn: "تأمین",
+  fundNote: "EPIX ارسال کنید تا استخر ایردراپ برای همه رشد کند",
+  sending: "ارسال...", confirming: "تأیید...", claimedBang: "درخواست شد!",
+  claimSuccess: "ایردراپ با موفقیت درخواست شد!", txSent: "تراکنش ارسال شد: ",
+  enterValid: "مقدار معتبر وارد کنید", txFailed: "تراکنش ناموفق",
+  walletNotLoaded: "اتصال کیف پول بارگذاری نشده، دوباره تلاش کنید",
+  couldNotLoad: "بارگذاری اطلاعات درخواست ممکن نیست: ", noClaimsYet: "هنوز درخواستی نیست - اولین باشید!",
+  couldNotLoadRecent: "بارگذاری درخواست‌های اخیر ممکن نیست", xidBoosted: "تقویت xID",
+  epixClaimed: "EPIX درخواست شده", xidBoostedDash: "تقویت xID",
+  poolFunded: "استخر تأمین شد با ", justNow: "همین الان", mAgo: "د پیش", hAgo: "س پیش", dAgo: "ر پیش"
+ },
+ fr: { _name: "Français",
+  title: "Epix Airdrop", subtitle: "Connecter. Réclamer. Collecter.", claimYourEpix: "Réclamez vos EPIX",
+  connectPrompt: "Connectez votre portefeuille pour voir ce que vous pouvez réclamer", connectWallet: "Connecter le portefeuille",
+  disconnect: "Déconnecter", xidCallout: 'Vous pourriez gagner <strong>10x plus</strong> avec un xID !',
+  registerFirst: "Enregistrez-en un d'abord", epixAvailable: "EPIX disponibles", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Réclamer l'Airdrop", pool: "Pool", balance: "Solde", claimed: "Réclamé", claimers: "Réclamants",
+  recentClaims: "Réclamations récentes", loading: "Chargement...", howItWorks: "Comment ça marche",
+  infoFund: "Financer", infoFundDesc: "N'importe qui envoie des EPIX au pool",
+  infoClaim: "Réclamer", infoClaimDesc: "Une réclamation par adresse",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x avec un xID enregistré",
+  infoDecay: "Décroissance équitable", infoDecayDesc: "Le pool rétrécit mais ne se vide jamais",
+  infoFine: "0,1% du pool par réclamation (1% avec xID) \u00b7 Max 1 000 / 10 000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Financer le pool", fundConnectPrompt: "Connectez votre portefeuille ci-dessus pour financer le pool",
+  amountPlaceholder: "Montant en EPIX", fundBtn: "Financer",
+  fundNote: "Envoyez des EPIX pour agrandir le pool d'airdrop pour tous",
+  sending: "Envoi...", confirming: "Confirmation...", claimedBang: "Réclamé !",
+  claimSuccess: "Airdrop réclamé avec succès !", txSent: "Transaction envoyée : ",
+  enterValid: "Entrez un montant valide", txFailed: "Transaction échouée",
+  walletNotLoaded: "Connecteur de portefeuille pas encore chargé, réessayez",
+  couldNotLoad: "Impossible de charger les infos de réclamation : ", noClaimsYet: "Aucune réclamation - soyez le premier !",
+  couldNotLoadRecent: "Impossible de charger les réclamations récentes", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX réclamés", xidBoostedDash: "xID boosté",
+  poolFunded: "Pool financé avec ", justNow: "à l'instant", mAgo: "m", hAgo: "h", dAgo: "j"
+ },
+ hu: { _name: "Magyar",
+  title: "Epix Airdrop", subtitle: "Csatlakozz. Igényelj. Gyűjts.", claimYourEpix: "Igényeld az EPIX-ed",
+  connectPrompt: "Csatlakoztasd a tárcádat", connectWallet: "Tárca csatlakoztatása",
+  disconnect: "Leválasztás", xidCallout: '<strong>10x többet</strong> kereshetnél xID-vel!',
+  registerFirst: "Regisztrálj egyet először", epixAvailable: "EPIX elérhető", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Airdrop igénylése", pool: "Pool", balance: "Egyenleg", claimed: "Igényelve", claimers: "Igénylők",
+  recentClaims: "Legutóbbi igények", loading: "Betöltés...", howItWorks: "Hogyan működik",
+  infoFund: "Finanszírozás", infoFundDesc: "Bárki küldhet EPIX-et a poolba",
+  infoClaim: "Igénylés", infoClaimDesc: "Egy igény címenként",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x regisztrált xID-vel",
+  infoDecay: "Méltányos csökkenés", infoDecayDesc: "A pool zsugorodik de sosem ürül ki",
+  infoFine: "0,1% a poolból igényenként (1% xID-vel) \u00b7 Max 1 000 / 10 000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Pool finanszírozása", fundConnectPrompt: "Csatlakoztasd a tárcádat fent a finanszírozáshoz",
+  amountPlaceholder: "Összeg EPIX-ben", fundBtn: "Finanszírozás",
+  fundNote: "Küldj EPIX-et az airdrop pool növeléséhez",
+  sending: "Küldés...", confirming: "Megerősítés...", claimedBang: "Igényelve!",
+  claimSuccess: "Airdrop sikeresen igényelve!", txSent: "Tranzakció elküldve: ",
+  enterValid: "Adj meg érvényes összeget", txFailed: "Tranzakció sikertelen",
+  walletNotLoaded: "Tárca csatlakozó még nem töltődött be, próbáld újra",
+  couldNotLoad: "Nem sikerült betölteni az igény infót: ", noClaimsYet: "Még nincs igény - legyél az első!",
+  couldNotLoadRecent: "Nem sikerült betölteni a legutóbbi igényeket", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX igényelve", xidBoostedDash: "xID boostolt",
+  poolFunded: "Pool finanszírozva ", justNow: "éppen most", mAgo: "p", hAgo: "ó", dAgo: "n"
+ },
+ it: { _name: "Italiano",
+  title: "Epix Airdrop", subtitle: "Connetti. Richiedi. Raccogli.", claimYourEpix: "Richiedi i tuoi EPIX",
+  connectPrompt: "Collega il tuo wallet per vedere cosa puoi richiedere", connectWallet: "Collega wallet",
+  disconnect: "Disconnetti", xidCallout: 'Potresti guadagnare <strong>10x di più</strong> con un xID!',
+  registerFirst: "Registrane uno prima", epixAvailable: "EPIX disponibili", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Richiedi Airdrop", pool: "Pool", balance: "Saldo", claimed: "Richiesto", claimers: "Richiedenti",
+  recentClaims: "Richieste recenti", loading: "Caricamento...", howItWorks: "Come funziona",
+  infoFund: "Finanzia", infoFundDesc: "Chiunque invia EPIX al pool",
+  infoClaim: "Richiedi", infoClaimDesc: "Una richiesta per indirizzo",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x con un xID registrato",
+  infoDecay: "Decadimento equo", infoDecayDesc: "Il pool si riduce ma non si svuota mai",
+  infoFine: "0,1% del pool per richiesta (1% con xID) \u00b7 Max 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Finanzia il pool", fundConnectPrompt: "Collega il tuo wallet sopra per finanziare il pool",
+  amountPlaceholder: "Importo in EPIX", fundBtn: "Finanzia",
+  fundNote: "Invia EPIX per far crescere il pool dell'airdrop per tutti",
+  sending: "Invio...", confirming: "Conferma...", claimedBang: "Richiesto!",
+  claimSuccess: "Airdrop richiesto con successo!", txSent: "Transazione inviata: ",
+  enterValid: "Inserisci un importo valido", txFailed: "Transazione fallita",
+  walletNotLoaded: "Connettore wallet non ancora caricato, riprova",
+  couldNotLoad: "Impossibile caricare info richiesta: ", noClaimsYet: "Nessuna richiesta ancora - sii il primo!",
+  couldNotLoadRecent: "Impossibile caricare richieste recenti", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX richiesti", xidBoostedDash: "xID boostato",
+  poolFunded: "Pool finanziato con ", justNow: "adesso", mAgo: "m fa", hAgo: "h fa", dAgo: "g fa"
+ },
+ jp: { _name: "日本語",
+  title: "Epix エアドロップ", subtitle: "接続・請求・獲得", claimYourEpix: "EPIXを請求",
+  connectPrompt: "ウォレットを接続して請求可能額を確認", connectWallet: "ウォレット接続",
+  disconnect: "切断", xidCallout: 'xIDで<strong>10倍</strong>獲得できます！',
+  registerFirst: "まずxIDを登録", epixAvailable: "EPIX 利用可能", xidBoostBadge: "10倍ブースト",
+  claimAirdrop: "エアドロップを請求", pool: "プール", balance: "残高", claimed: "請求済み", claimers: "請求者",
+  recentClaims: "最近の請求", loading: "読み込み中...", howItWorks: "仕組み",
+  infoFund: "資金提供", infoFundDesc: "誰でもEPIXをプールに送信",
+  infoClaim: "請求", infoClaimDesc: "アドレスごとに1回",
+  infoXidBoost: "xIDブースト", infoXidDesc: "登録済みxIDで10倍",
+  infoDecay: "公平な減衰", infoDecayDesc: "プールは縮小するが空にならない",
+  infoFine: "請求ごとにプールの0.1% (xIDで1%) \u00b7 最大 1,000 / 10,000 EPIX \u00b7 最小 1 EPIX",
+  fundThePool: "プールに資金提供", fundConnectPrompt: "上でウォレットを接続してプールに資金提供",
+  amountPlaceholder: "EPIX額", fundBtn: "資金提供",
+  fundNote: "EPIXを送信してエアドロッププールを成長させましょう",
+  sending: "送信中...", confirming: "確認中...", claimedBang: "請求完了！",
+  claimSuccess: "エアドロップの請求に成功しました！", txSent: "トランザクション送信: ",
+  enterValid: "有効な額を入力してください", txFailed: "トランザクション失敗",
+  walletNotLoaded: "ウォレットコネクタ未読込、再試行してください",
+  couldNotLoad: "請求情報を読み込めません: ", noClaimsYet: "まだ請求なし - 最初になろう！",
+  couldNotLoadRecent: "最近の請求を読み込めません", xidBoosted: "xIDブースト",
+  epixClaimed: "EPIX請求済み", xidBoostedDash: "xIDブースト",
+  poolFunded: "プールに資金提供 ", justNow: "たった今", mAgo: "分前", hAgo: "時間前", dAgo: "日前"
+ },
+ nl: { _name: "Nederlands",
+  title: "Epix Airdrop", subtitle: "Verbind. Claim. Verzamel.", claimYourEpix: "Claim je EPIX",
+  connectPrompt: "Verbind je wallet om te zien wat je kunt claimen", connectWallet: "Wallet verbinden",
+  disconnect: "Ontkoppelen", xidCallout: 'Je kunt <strong>10x meer</strong> verdienen met een xID!',
+  registerFirst: "Registreer er eerst een", epixAvailable: "EPIX beschikbaar", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Claim Airdrop", pool: "Pool", balance: "Saldo", claimed: "Geclaimd", claimers: "Claimers",
+  recentClaims: "Recente claims", loading: "Laden...", howItWorks: "Hoe het werkt",
+  infoFund: "Financieren", infoFundDesc: "Iedereen stuurt EPIX naar de pool",
+  infoClaim: "Claimen", infoClaimDesc: "Eén claim per adres",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x met een geregistreerd xID",
+  infoDecay: "Eerlijk verval", infoDecayDesc: "Pool krimpt maar raakt nooit leeg",
+  infoFine: "0,1% van de pool per claim (1% met xID) \u00b7 Max 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Pool financieren", fundConnectPrompt: "Verbind je wallet hierboven om de pool te financieren",
+  amountPlaceholder: "Bedrag in EPIX", fundBtn: "Financieren",
+  fundNote: "Stuur EPIX om de airdrop-pool te laten groeien voor iedereen",
+  sending: "Verzenden...", confirming: "Bevestigen...", claimedBang: "Geclaimd!",
+  claimSuccess: "Airdrop succesvol geclaimd!", txSent: "Transactie verzonden: ",
+  enterValid: "Voer een geldig bedrag in", txFailed: "Transactie mislukt",
+  walletNotLoaded: "Wallet-connector nog niet geladen, probeer opnieuw",
+  couldNotLoad: "Kon claiminfo niet laden: ", noClaimsYet: "Nog geen claims - wees de eerste!",
+  couldNotLoadRecent: "Kon recente claims niet laden", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX geclaimd", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool gefinancierd met ", justNow: "zojuist", mAgo: "m geleden", hAgo: "u geleden", dAgo: "d geleden"
+ },
+ pl: { _name: "Polski",
+  title: "Epix Airdrop", subtitle: "Połącz. Odbierz. Zbieraj.", claimYourEpix: "Odbierz swoje EPIX",
+  connectPrompt: "Połącz portfel aby zobaczyć co możesz odebrać", connectWallet: "Połącz portfel",
+  disconnect: "Rozłącz", xidCallout: 'Możesz zarobić <strong>10x więcej</strong> z xID!',
+  registerFirst: "Najpierw zarejestruj", epixAvailable: "EPIX dostępne", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Odbierz Airdrop", pool: "Pula", balance: "Saldo", claimed: "Odebrane", claimers: "Odbierający",
+  recentClaims: "Ostatnie odbiory", loading: "Ładowanie...", howItWorks: "Jak to działa",
+  infoFund: "Zasil", infoFundDesc: "Każdy może wysłać EPIX do puli",
+  infoClaim: "Odbierz", infoClaimDesc: "Jeden odbiór na adres",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x z zarejestrowanym xID",
+  infoDecay: "Sprawiedliwy spadek", infoDecayDesc: "Pula maleje ale nigdy się nie wyczerpie",
+  infoFine: "0,1% puli na odbiór (1% z xID) \u00b7 Maks 1 000 / 10 000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Zasil pulę", fundConnectPrompt: "Połącz portfel powyżej aby zasilić pulę",
+  amountPlaceholder: "Kwota w EPIX", fundBtn: "Zasil",
+  fundNote: "Wyślij EPIX aby powiększyć pulę airdrop dla wszystkich",
+  sending: "Wysyłanie...", confirming: "Potwierdzanie...", claimedBang: "Odebrano!",
+  claimSuccess: "Airdrop odebrany pomyślnie!", txSent: "Transakcja wysłana: ",
+  enterValid: "Wprowadź prawidłową kwotę", txFailed: "Transakcja nie powiodła się",
+  walletNotLoaded: "Łącznik portfela nie załadowany, spróbuj ponownie",
+  couldNotLoad: "Nie udało się załadować info o odbiorze: ", noClaimsYet: "Brak odbiorów - bądź pierwszy!",
+  couldNotLoadRecent: "Nie udało się załadować ostatnich odbiorów", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX odebrane", xidBoostedDash: "xID boosted",
+  poolFunded: "Pula zasilona kwotą ", justNow: "właśnie", mAgo: "m temu", hAgo: "g temu", dAgo: "d temu"
+ },
+ pt: { _name: "Português",
+  title: "Epix Airdrop", subtitle: "Conectar. Reivindicar. Coletar.", claimYourEpix: "Reivindique seu EPIX",
+  connectPrompt: "Conecte sua carteira para ver o que pode reivindicar", connectWallet: "Conectar carteira",
+  disconnect: "Desconectar", xidCallout: 'Poderia ganhar <strong>10x mais</strong> com um xID!',
+  registerFirst: "Registre um primeiro", epixAvailable: "EPIX disponível", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Reivindicar Airdrop", pool: "Pool", balance: "Saldo", claimed: "Reivindicado", claimers: "Reivindicantes",
+  recentClaims: "Reivindicações recentes", loading: "Carregando...", howItWorks: "Como funciona",
+  infoFund: "Financiar", infoFundDesc: "Qualquer um envia EPIX para o pool",
+  infoClaim: "Reivindicar", infoClaimDesc: "Uma reivindicação por endereço",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x com um xID registado",
+  infoDecay: "Decaimento justo", infoDecayDesc: "O pool diminui mas nunca esvazia",
+  infoFine: "0,1% do pool por reivindicação (1% com xID) \u00b7 Máx 1.000 / 10.000 EPIX \u00b7 Mín 1 EPIX",
+  fundThePool: "Financiar o pool", fundConnectPrompt: "Conecte a sua carteira acima para financiar o pool",
+  amountPlaceholder: "Quantia em EPIX", fundBtn: "Financiar",
+  fundNote: "Envie EPIX para fazer crescer o pool de airdrop para todos",
+  sending: "Enviando...", confirming: "Confirmando...", claimedBang: "Reivindicado!",
+  claimSuccess: "Airdrop reivindicado com sucesso!", txSent: "Transação enviada: ",
+  enterValid: "Insira uma quantia válida", txFailed: "Transação falhou",
+  walletNotLoaded: "Conector de carteira não carregado, tente novamente",
+  couldNotLoad: "Não foi possível carregar info: ", noClaimsYet: "Sem reivindicações - seja o primeiro!",
+  couldNotLoadRecent: "Não foi possível carregar reivindicações recentes", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX reivindicado", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool financiado com ", justNow: "agora", mAgo: "m atrás", hAgo: "h atrás", dAgo: "d atrás"
+ },
+ "pt-br": { _name: "Português (BR)",
+  title: "Epix Airdrop", subtitle: "Conecte. Resgate. Colete.", claimYourEpix: "Resgate seu EPIX",
+  connectPrompt: "Conecte sua carteira para ver o que pode resgatar", connectWallet: "Conectar carteira",
+  disconnect: "Desconectar", xidCallout: 'Você poderia ganhar <strong>10x mais</strong> com um xID!',
+  registerFirst: "Registre um primeiro", epixAvailable: "EPIX disponível", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Resgatar Airdrop", pool: "Pool", balance: "Saldo", claimed: "Resgatado", claimers: "Resgatantes",
+  recentClaims: "Resgates recentes", loading: "Carregando...", howItWorks: "Como funciona",
+  infoFund: "Financiar", infoFundDesc: "Qualquer pessoa envia EPIX para o pool",
+  infoClaim: "Resgatar", infoClaimDesc: "Um resgate por endereço",
+  infoXidBoost: "Boost xID", infoXidDesc: "10x com um xID registrado",
+  infoDecay: "Decaimento justo", infoDecayDesc: "O pool diminui mas nunca esvazia",
+  infoFine: "0,1% do pool por resgate (1% com xID) \u00b7 Máx 1.000 / 10.000 EPIX \u00b7 Mín 1 EPIX",
+  fundThePool: "Financiar o pool", fundConnectPrompt: "Conecte sua carteira acima para financiar o pool",
+  amountPlaceholder: "Quantia em EPIX", fundBtn: "Financiar",
+  fundNote: "Envie EPIX para fazer o pool de airdrop crescer para todos",
+  sending: "Enviando...", confirming: "Confirmando...", claimedBang: "Resgatado!",
+  claimSuccess: "Airdrop resgatado com sucesso!", txSent: "Transação enviada: ",
+  enterValid: "Insira uma quantia válida", txFailed: "Transação falhou",
+  walletNotLoaded: "Conector da carteira não carregado, tente novamente",
+  couldNotLoad: "Não foi possível carregar info: ", noClaimsYet: "Sem resgates - seja o primeiro!",
+  couldNotLoadRecent: "Não foi possível carregar resgates recentes", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX resgatado", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool financiado com ", justNow: "agora", mAgo: "m atrás", hAgo: "h atrás", dAgo: "d atrás"
+ },
+ ru: { _name: "Русский",
+  title: "Epix Раздача", subtitle: "Подключи. Забери. Собери.", claimYourEpix: "Забери свои EPIX",
+  connectPrompt: "Подключите кошелёк, чтобы увидеть доступное", connectWallet: "Подключить кошелёк",
+  disconnect: "Отключить", xidCallout: 'Вы могли бы получить <strong>в 10 раз больше</strong> с xID!',
+  registerFirst: "Сначала зарегистрируйте", epixAvailable: "EPIX доступно", xidBoostBadge: "10x Буст",
+  claimAirdrop: "Забрать раздачу", pool: "Пул", balance: "Баланс", claimed: "Забрано", claimers: "Участники",
+  recentClaims: "Последние заявки", loading: "Загрузка...", howItWorks: "Как это работает",
+  infoFund: "Пополнить", infoFundDesc: "Любой отправляет EPIX в пул",
+  infoClaim: "Забрать", infoClaimDesc: "Одна заявка на адрес",
+  infoXidBoost: "Буст xID", infoXidDesc: "10x с зарегистрированным xID",
+  infoDecay: "Справедливое убывание", infoDecayDesc: "Пул уменьшается, но не иссякает",
+  infoFine: "0,1% пула за заявку (1% с xID) \u00b7 Макс 1 000 / 10 000 EPIX \u00b7 Мин 1 EPIX",
+  fundThePool: "Пополнить пул", fundConnectPrompt: "Подключите кошелёк выше для пополнения пула",
+  amountPlaceholder: "Сумма в EPIX", fundBtn: "Пополнить",
+  fundNote: "Отправьте EPIX, чтобы увеличить пул раздачи для всех",
+  sending: "Отправка...", confirming: "Подтверждение...", claimedBang: "Забрано!",
+  claimSuccess: "Раздача успешно получена!", txSent: "Транзакция отправлена: ",
+  enterValid: "Введите корректную сумму", txFailed: "Транзакция не удалась",
+  walletNotLoaded: "Коннектор кошелька ещё не загружен, попробуйте снова",
+  couldNotLoad: "Не удалось загрузить данные заявки: ", noClaimsYet: "Заявок пока нет - будьте первым!",
+  couldNotLoadRecent: "Не удалось загрузить последние заявки", xidBoosted: "xID Буст",
+  epixClaimed: "EPIX забрано", xidBoostedDash: "xID буст",
+  poolFunded: "Пул пополнен на ", justNow: "только что", mAgo: "м назад", hAgo: "ч назад", dAgo: "д назад"
+ },
+ sk: { _name: "Slovenčina",
+  title: "Epix Airdrop", subtitle: "Pripoj. Vyžiadaj. Zbieraj.", claimYourEpix: "Vyžiadaj si EPIX",
+  connectPrompt: "Pripoj peňaženku a zisti čo môžeš vyžiadať", connectWallet: "Pripojiť peňaženku",
+  disconnect: "Odpojiť", xidCallout: 'Mohol by si získať <strong>10x viac</strong> s xID!',
+  registerFirst: "Najprv si zaregistruj", epixAvailable: "EPIX k dispozícii", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Vyžiadať Airdrop", pool: "Pool", balance: "Zostatok", claimed: "Vyžiadané", claimers: "Žiadatelia",
+  recentClaims: "Posledné žiadosti", loading: "Načítavanie...", howItWorks: "Ako to funguje",
+  infoFund: "Financovať", infoFundDesc: "Ktokoľvek pošle EPIX do poolu",
+  infoClaim: "Vyžiadať", infoClaimDesc: "Jedna žiadosť na adresu",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x s registrovaným xID",
+  infoDecay: "Spravodlivý pokles", infoDecayDesc: "Pool sa zmenšuje ale nikdy sa nevyprázdni",
+  infoFine: "0,1% poolu za žiadosť (1% s xID) \u00b7 Max 1 000 / 10 000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Financovať pool", fundConnectPrompt: "Pripoj peňaženku vyššie pre financovanie poolu",
+  amountPlaceholder: "Suma v EPIX", fundBtn: "Financovať",
+  fundNote: "Pošli EPIX pre rast airdrop poolu pre všetkých",
+  sending: "Odosielanie...", confirming: "Potvrdzovanie...", claimedBang: "Vyžiadané!",
+  claimSuccess: "Airdrop úspešne vyžiadaný!", txSent: "Transakcia odoslaná: ",
+  enterValid: "Zadaj platnú sumu", txFailed: "Transakcia zlyhala",
+  walletNotLoaded: "Konektor peňaženky ešte nie je načítaný, skús znova",
+  couldNotLoad: "Nepodarilo sa načítať info o žiadosti: ", noClaimsYet: "Zatiaľ žiadne žiadosti - buď prvý!",
+  couldNotLoadRecent: "Nepodarilo sa načítať posledné žiadosti", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX vyžiadané", xidBoostedDash: "xID boosted",
+  poolFunded: "Pool financovaný sumou ", justNow: "práve teraz", mAgo: "m", hAgo: "h", dAgo: "d"
+ },
+ sl: { _name: "Slovenščina",
+  title: "Epix Airdrop", subtitle: "Poveži. Zahtevaj. Zberi.", claimYourEpix: "Zahtevaj svoj EPIX",
+  connectPrompt: "Poveži denarnico da vidiš kaj lahko zahtеvaš", connectWallet: "Poveži denarnico",
+  disconnect: "Prekini", xidCallout: 'Z xID bi lahko zaslužil <strong>10x več</strong>!',
+  registerFirst: "Najprej registriraj", epixAvailable: "EPIX na voljo", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Zahtevaj Airdrop", pool: "Sklad", balance: "Stanje", claimed: "Zahtevano", claimers: "Zahtevki",
+  recentClaims: "Zadnje zahteve", loading: "Nalaganje...", howItWorks: "Kako deluje",
+  infoFund: "Financiraj", infoFundDesc: "Kdorkoli pošlje EPIX v sklad",
+  infoClaim: "Zahtevaj", infoClaimDesc: "Ena zahteva na naslov",
+  infoXidBoost: "xID Boost", infoXidDesc: "10x z registriranim xID",
+  infoDecay: "Pravično zmanjšanje", infoDecayDesc: "Sklad se zmanjšuje a se nikoli ne izprazni",
+  infoFine: "0,1% sklada na zahtevo (1% z xID) \u00b7 Maks 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Financiraj sklad", fundConnectPrompt: "Poveži denarnico zgoraj za financiranje sklada",
+  amountPlaceholder: "Znesek v EPIX", fundBtn: "Financiraj",
+  fundNote: "Pošlji EPIX za rast airdrop sklada za vse",
+  sending: "Pošiljanje...", confirming: "Potrjevanje...", claimedBang: "Zahtevano!",
+  claimSuccess: "Airdrop uspešno zahtevan!", txSent: "Transakcija poslana: ",
+  enterValid: "Vnesi veljaven znesek", txFailed: "Transakcija ni uspela",
+  walletNotLoaded: "Povezovalnik denarnice še ni naložen, poskusi znova",
+  couldNotLoad: "Ni bilo mogoče naložiti info: ", noClaimsYet: "Še ni zahtev - bodi prvi!",
+  couldNotLoadRecent: "Ni bilo mogoče naložiti zadnjih zahtev", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX zahtevano", xidBoostedDash: "xID boosted",
+  poolFunded: "Sklad financiran z ", justNow: "ravnokar", mAgo: "m nazaj", hAgo: "u nazaj", dAgo: "d nazaj"
+ },
+ tr: { _name: "Türkçe",
+  title: "Epix Airdrop", subtitle: "Bağlan. Talep et. Topla.", claimYourEpix: "EPIX'ini Talep Et",
+  connectPrompt: "Talep edebileceğini görmek için cüzdanını bağla", connectWallet: "Cüzdan Bağla",
+  disconnect: "Bağlantıyı Kes", xidCallout: 'Bir xID ile <strong>10 kat daha fazla</strong> kazanabilirsin!',
+  registerFirst: "Önce bir tane kaydet", epixAvailable: "EPIX mevcut", xidBoostBadge: "10x Boost",
+  claimAirdrop: "Airdrop Talep Et", pool: "Havuz", balance: "Bakiye", claimed: "Talep Edildi", claimers: "Talep Edenler",
+  recentClaims: "Son Talepler", loading: "Yükleniyor...", howItWorks: "Nasıl Çalışır",
+  infoFund: "Fonla", infoFundDesc: "Herkes havuza EPIX gönderebilir",
+  infoClaim: "Talep Et", infoClaimDesc: "Adres başına bir talep",
+  infoXidBoost: "xID Boost", infoXidDesc: "Kayıtlı xID ile 10x",
+  infoDecay: "Adil Azalma", infoDecayDesc: "Havuz küçülür ama asla boşalmaz",
+  infoFine: "Talep başına havuzun %0,1'i (xID ile %1) \u00b7 Maks 1.000 / 10.000 EPIX \u00b7 Min 1 EPIX",
+  fundThePool: "Havuzu Fonla", fundConnectPrompt: "Havuzu fonlamak için cüzdanını yukarıda bağla",
+  amountPlaceholder: "EPIX miktarı", fundBtn: "Fonla",
+  fundNote: "Herkes için airdrop havuzunu büyütmek üzere EPIX gönder",
+  sending: "Gönderiliyor...", confirming: "Onaylanıyor...", claimedBang: "Talep Edildi!",
+  claimSuccess: "Airdrop başarıyla talep edildi!", txSent: "İşlem gönderildi: ",
+  enterValid: "Geçerli bir miktar gir", txFailed: "İşlem başarısız",
+  walletNotLoaded: "Cüzdan bağlayıcısı henüz yüklenmedi, tekrar dene",
+  couldNotLoad: "Talep bilgisi yüklenemedi: ", noClaimsYet: "Henüz talep yok - ilk sen ol!",
+  couldNotLoadRecent: "Son talepler yüklenemedi", xidBoosted: "xID Boosted",
+  epixClaimed: "EPIX talep edildi", xidBoostedDash: "xID boosted",
+  poolFunded: "Havuz fonlandı: ", justNow: "az önce", mAgo: "dk önce", hAgo: "sa önce", dAgo: "gn önce"
+ },
+ uk: { _name: "Українська",
+  title: "Epix Роздача", subtitle: "Підключи. Забери. Збери.", claimYourEpix: "Забери свої EPIX",
+  connectPrompt: "Підключіть гаманець, щоб побачити доступне", connectWallet: "Підключити гаманець",
+  disconnect: "Від'єднати", xidCallout: 'Ви могли б отримати <strong>в 10 разів більше</strong> з xID!',
+  registerFirst: "Спочатку зареєструйте", epixAvailable: "EPIX доступно", xidBoostBadge: "10x Буст",
+  claimAirdrop: "Забрати роздачу", pool: "Пул", balance: "Баланс", claimed: "Забрано", claimers: "Учасники",
+  recentClaims: "Останні заявки", loading: "Завантаження...", howItWorks: "Як це працює",
+  infoFund: "Поповнити", infoFundDesc: "Будь-хто надсилає EPIX у пул",
+  infoClaim: "Забрати", infoClaimDesc: "Одна заявка на адресу",
+  infoXidBoost: "Буст xID", infoXidDesc: "10x з зареєстрованим xID",
+  infoDecay: "Справедливе зменшення", infoDecayDesc: "Пул зменшується, але не вичерпується",
+  infoFine: "0,1% пулу за заявку (1% з xID) \u00b7 Макс 1 000 / 10 000 EPIX \u00b7 Мін 1 EPIX",
+  fundThePool: "Поповнити пул", fundConnectPrompt: "Підключіть гаманець вище для поповнення пулу",
+  amountPlaceholder: "Сума в EPIX", fundBtn: "Поповнити",
+  fundNote: "Надішліть EPIX, щоб збільшити пул роздачі для всіх",
+  sending: "Надсилання...", confirming: "Підтвердження...", claimedBang: "Забрано!",
+  claimSuccess: "Роздачу успішно отримано!", txSent: "Транзакцію надіслано: ",
+  enterValid: "Введіть коректну суму", txFailed: "Транзакція не вдалася",
+  walletNotLoaded: "Конектор гаманця ще не завантажено, спробуйте знову",
+  couldNotLoad: "Не вдалося завантажити дані заявки: ", noClaimsYet: "Заявок поки немає - будьте першим!",
+  couldNotLoadRecent: "Не вдалося завантажити останні заявки", xidBoosted: "xID Буст",
+  epixClaimed: "EPIX забрано", xidBoostedDash: "xID буст",
+  poolFunded: "Пул поповнено на ", justNow: "щойно", mAgo: "хв тому", hAgo: "год тому", dAgo: "д тому"
+ },
+ zh: { _name: "中文",
+  title: "Epix 空投", subtitle: "连接·领取·收集", claimYourEpix: "领取你的 EPIX",
+  connectPrompt: "连接钱包查看可领取数量", connectWallet: "连接钱包",
+  disconnect: "断开", xidCallout: '使用 xID 可获得 <strong>10 倍</strong>奖励！',
+  registerFirst: "先注册一个", epixAvailable: "EPIX 可用", xidBoostBadge: "10倍加成",
+  claimAirdrop: "领取空投", pool: "池", balance: "余额", claimed: "已领取", claimers: "领取者",
+  recentClaims: "最近领取", loading: "加载中...", howItWorks: "运作方式",
+  infoFund: "注资", infoFundDesc: "任何人都可以向池中发送 EPIX",
+  infoClaim: "领取", infoClaimDesc: "每个地址仅限一次",
+  infoXidBoost: "xID 加成", infoXidDesc: "注册 xID 可获10倍",
+  infoDecay: "公平衰减", infoDecayDesc: "池会缩小但永不为零",
+  infoFine: "每次领取池的 0.1%（xID 为 1%）\u00b7 最大 1,000 / 10,000 EPIX \u00b7 最小 1 EPIX",
+  fundThePool: "为池注资", fundConnectPrompt: "在上方连接钱包以为池注资",
+  amountPlaceholder: "EPIX 数量", fundBtn: "注资",
+  fundNote: "发送 EPIX 为所有人扩大空投池",
+  sending: "发送中...", confirming: "确认中...", claimedBang: "已领取！",
+  claimSuccess: "空投领取成功！", txSent: "交易已发送：",
+  enterValid: "请输入有效数量", txFailed: "交易失败",
+  walletNotLoaded: "钱包连接器尚未加载，请重试",
+  couldNotLoad: "无法加载领取信息：", noClaimsYet: "尚无领取 - 成为第一个！",
+  couldNotLoadRecent: "无法加载最近领取", xidBoosted: "xID 加成",
+  epixClaimed: "EPIX 已领取", xidBoostedDash: "xID 加成",
+  poolFunded: "已为池注资 ", justNow: "刚刚", mAgo: "分钟前", hAgo: "小时前", dAgo: "天前"
+ },
+ "zh-tw": { _name: "繁體中文",
+  title: "Epix 空投", subtitle: "連接·領取·收集", claimYourEpix: "領取你的 EPIX",
+  connectPrompt: "連接錢包查看可領取數量", connectWallet: "連接錢包",
+  disconnect: "斷開", xidCallout: '使用 xID 可獲得 <strong>10 倍</strong>獎勵！',
+  registerFirst: "先註冊一個", epixAvailable: "EPIX 可用", xidBoostBadge: "10倍加成",
+  claimAirdrop: "領取空投", pool: "池", balance: "餘額", claimed: "已領取", claimers: "領取者",
+  recentClaims: "最近領取", loading: "載入中...", howItWorks: "運作方式",
+  infoFund: "注資", infoFundDesc: "任何人都可以向池中發送 EPIX",
+  infoClaim: "領取", infoClaimDesc: "每個地址僅限一次",
+  infoXidBoost: "xID 加成", infoXidDesc: "註冊 xID 可獲10倍",
+  infoDecay: "公平衰減", infoDecayDesc: "池會縮小但永不為零",
+  infoFine: "每次領取池的 0.1%（xID 為 1%）\u00b7 最大 1,000 / 10,000 EPIX \u00b7 最小 1 EPIX",
+  fundThePool: "為池注資", fundConnectPrompt: "在上方連接錢包以為池注資",
+  amountPlaceholder: "EPIX 數量", fundBtn: "注資",
+  fundNote: "發送 EPIX 為所有人擴大空投池",
+  sending: "發送中...", confirming: "確認中...", claimedBang: "已領取！",
+  claimSuccess: "空投領取成功！", txSent: "交易已發送：",
+  enterValid: "請輸入有效數量", txFailed: "交易失敗",
+  walletNotLoaded: "錢包連接器尚未載入，請重試",
+  couldNotLoad: "無法載入領取資訊：", noClaimsYet: "尚無領取 - 成為第一個！",
+  couldNotLoadRecent: "無法載入最近領取", xidBoosted: "xID 加成",
+  epixClaimed: "EPIX 已領取", xidBoostedDash: "xID 加成",
+  poolFunded: "已為池注資 ", justNow: "剛剛", mAgo: "分鐘前", hAgo: "小時前", dAgo: "天前"
+ }
+}
+
+var currentLang = "en"
+
+function t(key) {
+ var d = LANGS[currentLang] || LANGS.en
+ return d[key] || LANGS.en[key] || key
+}
+
+function applyLang() {
+ document.querySelectorAll("[data-t]").forEach(function(el) {
+  var key = el.getAttribute("data-t")
+  var val = t(key)
+  if (val.indexOf("<") >= 0) el.innerHTML = val
+  else el.textContent = val
+ })
+ document.querySelectorAll("[data-t-placeholder]").forEach(function(el) {
+  el.placeholder = t(el.getAttribute("data-t-placeholder"))
+ })
+}
+
+function setLang(lang) {
+ currentLang = LANGS[lang] ? lang : "en"
+ applyLang()
+ try { localStorage.setItem("epix-airdrop-lang", currentLang) } catch(e) {}
+ var sel = document.getElementById("lang-select")
+ if (sel) sel.value = currentLang
+ if (typeof loadRecentClaims === "function") loadRecentClaims()
+}
+
+function initLang() {
+ // Build select
+ var sel = document.getElementById("lang-select")
+ var keys = Object.keys(LANGS)
+ for (var i = 0; i < keys.length; i++) {
+  var opt = document.createElement("option")
+  opt.value = keys[i]
+  opt.textContent = LANGS[keys[i]]._name
+  sel.appendChild(opt)
+ }
+
+ // Detect language: saved > browser > en
+ var saved = null
+ try { saved = localStorage.getItem("epix-airdrop-lang") } catch(e) {}
+ if (saved && LANGS[saved]) {
+  currentLang = saved
+ } else {
+  var bl = (navigator.language || "").toLowerCase()
+  if (LANGS[bl]) { currentLang = bl }
+  else {
+   var short = bl.split("-")[0]
+   if (short === "ja") short = "jp"
+   if (LANGS[short]) currentLang = short
+  }
+ }
+ sel.value = currentLang
+ applyLang()
+}
+
+initLang()
+
+// =============================================
 // Contract interaction
 // =============================================
 
-var AIRDROP_ADDRESS = "0xCa9aDc8736d5fb1743939cA745824fB8fBd97793"
+var AIRDROP_ADDRESS = "0x3BDB4DB4B960b5679f22AA5122A31a4E9f38A86E"
 var AIRDROP_ABI = [
  "function claim() external",
  "function getPoolInfo() external view returns (tuple(uint256 balance, uint256 totalClaimed, uint32 totalClaimers, uint256 claimRateBps, uint256 maxClaim, uint256 maxClaimXid, uint256 minClaim, uint256 xidMultiplier))",
@@ -534,16 +1156,16 @@ var epixkitReady = false
 
 page.chainEvmRpcUrl().then(function(evmRpc) {
  page.chainBlockExplorerUrl().then(function(explorer) {
-  var rpcUrl = evmRpc || "https://evmrpc.testnet.epix.zone"
-  explorerUrl = (explorer || "https://testscan.epix.zone").replace(/\/+$/, "")
+  var rpcUrl = evmRpc || "https://evmrpc.epix.zone"
+  explorerUrl = (explorer || "https://scan.epix.zone").replace(/\/+$/, "")
 
   readProvider = new ethers.JsonRpcProvider(rpcUrl)
   readContract = new ethers.Contract(AIRDROP_ADDRESS, AIRDROP_ABI, readProvider)
 
   if (typeof EpixKit !== "undefined") {
    EpixKit.init({
-    chainId: "0x77D",
-    chainName: "Epix Testnet",
+    chainId: "0x77C",
+    chainName: "Epix",
     nativeCurrency: { name: "EPIX", symbol: "EPIX", decimals: 18 },
     rpcUrls: [rpcUrl],
     blockExplorerUrls: [explorerUrl],
@@ -586,7 +1208,7 @@ function loadRecentClaims() {
   container.innerHTML = ""
 
   if (claims.length === 0) {
-   container.innerHTML = '<div class="empty-state">No claims yet - be the first!</div>'
+   container.innerHTML = '<div class="empty-state">' + escHtml(t("noClaimsYet")) + '</div>'
    return
   }
 
@@ -603,7 +1225,7 @@ function loadRecentClaims() {
    var colorIdx = parseInt(c.claimer.substring(2, 4), 16) % AVATAR_COLORS.length
    var initial = hasName ? c.xidName.charAt(0).toUpperCase() : c.claimer.substring(2, 4).toUpperCase()
 
-   var boostTag = c.xidBoosted ? '<div class="recent-boost">xID Boosted</div>' : ''
+   var boostTag = c.xidBoosted ? '<div class="recent-boost">' + escHtml(t("xidBoosted")) + '</div>' : ''
 
    row.innerHTML =
     '<div class="recent-avatar" style="background:' + AVATAR_COLORS[colorIdx] + '">' + initial + '</div>' +
@@ -619,7 +1241,7 @@ function loadRecentClaims() {
   }
  }).catch(function(err) {
   console.log("[Airdrop] Recent claims error:", err.message)
-  document.getElementById("recent-claims").innerHTML = '<div class="empty-state">Could not load recent claims</div>'
+  document.getElementById("recent-claims").innerHTML = '<div class="empty-state">' + escHtml(t("couldNotLoadRecent")) + '</div>'
  })
 }
 
@@ -627,7 +1249,7 @@ function loadRecentClaims() {
 
 async function connectWallet() {
  if (!epixkitReady) {
-  showStatus("wallet-error", "fail", "Wallet connector not loaded yet, please try again")
+  showStatus("wallet-error", "fail", t("walletNotLoaded"))
   return
  }
  hideStatus("wallet-error")
@@ -648,6 +1270,8 @@ function disconnectWallet() {
  wallet.address = null
  wallet.name = null
  showSection("state-disconnected")
+ document.getElementById("fund-disconnected").classList.remove("hidden")
+ document.getElementById("fund-connected").classList.add("hidden")
 }
 
 async function setupWallet(result) {
@@ -660,15 +1284,19 @@ async function setupWallet(result) {
  var label = shortAddr(wallet.address)
  if (wallet.name) label = wallet.name + " " + label
 
+ document.getElementById("fund-disconnected").classList.add("hidden")
+ document.getElementById("fund-connected").classList.remove("hidden")
+ hideStatus("fund-status")
+
  try {
   var info = await readContract.getClaimerInfo(wallet.address)
 
   if (info.claimed) {
    document.getElementById("claimed-wallet-addr").textContent = label
    var amtStr = formatEpix(ethers.formatEther(info.amountClaimed))
-   document.getElementById("claimed-amount").textContent = amtStr + " EPIX Claimed"
+   document.getElementById("claimed-amount").textContent = amtStr + " " + t("epixClaimed")
    var detail = ""
-   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - xID boosted"
+   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - " + t("xidBoostedDash")
    if (info.claimTime > 0) detail += (detail ? " - " : "") + timeAgo(Number(info.claimTime))
    document.getElementById("claimed-detail").textContent = detail
    showSection("state-claimed")
@@ -688,7 +1316,7 @@ async function setupWallet(result) {
 
    hideStatus("claim-status")
    document.getElementById("btn-claim").disabled = false
-   document.getElementById("btn-claim").innerHTML = '<span class="shimmer"></span>Claim Airdrop'
+   document.getElementById("btn-claim").innerHTML = '<span class="shimmer"></span>' + escHtml(t("claimAirdrop"))
    document.getElementById("btn-claim").classList.remove("loading")
    showSection("state-connected")
   }
@@ -697,7 +1325,7 @@ async function setupWallet(result) {
   document.getElementById("estimate-amount").textContent = "?"
   document.getElementById("xid-callout").classList.add("hidden")
   document.getElementById("xid-badge").classList.add("hidden")
-  showStatus("claim-status", "fail", "Could not load claim info: " + err.message)
+  showStatus("claim-status", "fail", t("couldNotLoad") + err.message)
   showSection("state-connected")
  }
 }
@@ -710,20 +1338,20 @@ async function claim() {
  var btn = document.getElementById("btn-claim")
  btn.disabled = true
  btn.classList.add("loading")
- btn.innerHTML = '<span class="shimmer"></span>Sending...'
+ btn.innerHTML = '<span class="shimmer"></span>' + escHtml(t("sending"))
  hideStatus("claim-status")
 
  try {
   var tx = await wallet.contract.claim()
-  btn.innerHTML = '<span class="shimmer"></span>Confirming...'
+  btn.innerHTML = '<span class="shimmer"></span>' + escHtml(t("confirming"))
 
   var txLink = '<a class="tx-link" href="' + explorerUrl + '/tx/' + tx.hash + '" target="_blank">' + tx.hash.substring(0, 18) + '...</a>'
-  showStatus("claim-status", "warn", "Transaction sent: " + txLink)
+  showStatus("claim-status", "warn", t("txSent") + txLink)
 
   await tx.wait()
 
-  btn.innerHTML = "Claimed!"
-  showStatus("claim-status", "ok", "Airdrop claimed successfully!")
+  btn.innerHTML = escHtml(t("claimedBang"))
+  showStatus("claim-status", "ok", t("claimSuccess"))
 
   loadPoolInfo()
   loadRecentClaims()
@@ -732,8 +1360,8 @@ async function claim() {
  } catch (err) {
   btn.disabled = false
   btn.classList.remove("loading")
-  btn.innerHTML = '<span class="shimmer"></span>Claim Airdrop'
-  showStatus("claim-status", "fail", err.reason || err.message || "Transaction failed")
+  btn.innerHTML = '<span class="shimmer"></span>' + escHtml(t("claimAirdrop"))
+  showStatus("claim-status", "fail", err.reason || err.message || t("txFailed"))
  }
 }
 
@@ -746,9 +1374,9 @@ async function showClaimedState() {
    if (wallet.name) label = wallet.name + " " + label
    document.getElementById("claimed-wallet-addr").textContent = label
    var amtStr = formatEpix(ethers.formatEther(info.amountClaimed))
-   document.getElementById("claimed-amount").textContent = amtStr + " EPIX Claimed"
+   document.getElementById("claimed-amount").textContent = amtStr + " " + t("epixClaimed")
    var detail = ""
-   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - xID boosted"
+   if (info.hasXid && info.xidName.length > 0) detail = info.xidName + " - " + t("xidBoostedDash")
    if (info.claimTime > 0) detail += (detail ? " - " : "") + timeAgo(Number(info.claimTime))
    document.getElementById("claimed-detail").textContent = detail
    showSection("state-claimed")
@@ -756,6 +1384,45 @@ async function showClaimedState() {
  } catch (err) {
   console.log("[Airdrop] Post-claim refresh error:", err.message)
  }
+}
+
+// --- Fund Pool ---
+
+async function fundPool() {
+ if (!wallet.signer) return
+
+ var input = document.getElementById("fund-amount")
+ var amount = input.value.trim()
+ if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+  showStatus("fund-status", "fail", t("enterValid"))
+  return
+ }
+
+ var btn = document.getElementById("btn-fund")
+ btn.disabled = true
+ btn.textContent = t("sending")
+ hideStatus("fund-status")
+
+ try {
+  var tx = await wallet.signer.sendTransaction({
+   to: AIRDROP_ADDRESS,
+   value: ethers.parseEther(amount)
+  })
+
+  var txLink = '<a class="tx-link" href="' + explorerUrl + '/tx/' + tx.hash + '" target="_blank">' + tx.hash.substring(0, 18) + '...</a>'
+  showStatus("fund-status", "warn", t("txSent") + txLink)
+
+  await tx.wait()
+
+  showStatus("fund-status", "ok", t("poolFunded") + formatEpix(amount) + " EPIX!")
+  input.value = ""
+  loadPoolInfo()
+ } catch (err) {
+  showStatus("fund-status", "fail", err.reason || err.message || t("txFailed"))
+ }
+
+ btn.disabled = false
+ btn.textContent = t("fundBtn")
 }
 
 // --- UI Helpers ---
@@ -796,10 +1463,10 @@ function timeAgo(ts) {
  if (!ts) return ""
  var now = Math.floor(Date.now() / 1000)
  var diff = now - ts
- if (diff < 60) return "just now"
- if (diff < 3600) return Math.floor(diff / 60) + "m ago"
- if (diff < 86400) return Math.floor(diff / 3600) + "h ago"
- if (diff < 604800) return Math.floor(diff / 86400) + "d ago"
+ if (diff < 60) return t("justNow")
+ if (diff < 3600) return Math.floor(diff / 60) + t("mAgo")
+ if (diff < 86400) return Math.floor(diff / 3600) + t("hAgo")
+ if (diff < 604800) return Math.floor(diff / 86400) + t("dAgo")
  return new Date(ts * 1000).toLocaleDateString()
 }
 
