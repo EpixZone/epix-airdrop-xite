@@ -1,22 +1,33 @@
 {
  "address": "epix1drp5v2gs20fass9t7h8yfmtfwc8hvmjvszswtt",
  "address_index": 14997294,
+ "bundles": {
+  "c288c3ae1f52c1e931327702796139883b3f51489c8a4a8cce06195cf6aaf883": {
+   "seq": 0,
+   "size": 78055
+  }
+ },
  "clone_root": "template-new",
  "cloned_from": "epix1dashuu6pvsut7aw9dx44f543mv7xt9zlydsj9t",
  "description": "Claim your share of the EPIX airdrop pool",
- "epixnet_version": "0.0.7",
+ "edx": 1,
+ "epixnet_version": "0.3.28",
  "files": {
   "index.html": {
+   "b3": "c288c3ae1f52c1e931327702796139883b3f51489c8a4a8cce06195cf6aaf883",
+   "bundle": "c288c3ae1f52c1e931327702796139883b3f51489c8a4a8cce06195cf6aaf883",
+   "off": 0,
    "sha512": "cf455a5787c39cb22d5a53e9117b7f33ec2cb4d67c3d11db5e16b3f28b4555a0",
    "size": 78055
   }
  },
+ "files_merkle_root": "fa5027a3769c77abb682fafe7abd1b44dd8a53368d0b6eae1bcca465be3f306d",
  "ignore": "(js/all\\.js|\\.git)",
  "inner_path": "content.json",
- "modified": 1775240126,
+ "modified": 1785266464,
  "postmessage_nonce_security": true,
  "signers_sign": "HLA1bzbiQeLUQ20CNT4U1QIdKsFOQlBKEkZ8JQpCsOKpRiNmZlg/5of5UFpVOFCRvjk+UGz1PRPbcxvE9JVgwYI=",
- "signs": {"epix1drp5v2gs20fass9t7h8yfmtfwc8hvmjvszswtt": "G+M/FiWscQidBqHWgvDQZFcPiREK+At9TH47h6d2A0IZa4Bdo+aptRM/lF6Qjc+TSUrKLMMpjlnzGdcDMcoEv3M="},
+ "signs": {"epix1drp5v2gs20fass9t7h8yfmtfwc8hvmjvszswtt": "HKm0H5mJsDbeFqUajD9a8kVRi0n5oPvjvPtExmzdKc6zX9Ar1kRDOU39l/Snc7ygO2b2pU5JtXdZeLMS/uyDZ0Q="},
  "signs_required": 1,
  "title": "Epix Airdrop"
 }
